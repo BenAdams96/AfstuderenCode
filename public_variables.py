@@ -1,10 +1,11 @@
 from pathlib import Path
 
 #basic paths
-base_path_ = Path(__file__).resolve().parent
+base_path_ = Path(__file__).resolve().parent.parent
 MDsimulations_folder_ = 'MDsimulations_JAK1'
 MDsimulations_path_ = base_path_.parents[0] / MDsimulations_folder_
-
+print('base path')
+print(base_path_)
 #dataset related variable names
 model_ = 'RF'
 RDKIT_descriptors_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
@@ -31,7 +32,7 @@ dfs_descriptors_only_path_ =  dataframes_master_ / 'descriptors only'
 dfs_reduced_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}'
 dfs_reduced_and_MD_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}_MD'
 dfs_MD_only_path_ = dataframes_master_ / 'MD only'
-Modelresults_folder_ = f'ModelResults_{model_}' #not a path because can be in different paths
+Modelresults_folder_ = f'ModelResults_' #not a path because can be in different paths
 Modelresults_combined_folder_ = f'ModelResults_combined_{model_}'
 
 # dataframes_folder_red_ = f'dataframes_{dataset_protein_}_{descriptors_}_i{timeinterval_snapshots}_t{correlation_threshold_}'
@@ -114,12 +115,20 @@ hyperparameter_grid_ = {
 #         }
 
 hyperparameter_grid_XGboost = {
-    'n_estimators': [50, 100],          # Number of trees (lower values for quicker training)
-    'max_depth': [3, 5, 7],             # Maximum depth of each tree (shallower trees to avoid overfitting)
-    'learning_rate': [0.01, 0.1],       # Learning rate (smaller values for more gradual training)
-    'min_child_weight': [1, 5],         # Minimum sum of instance weight (Hessian) needed in a child
-    'subsample': [0.6, 0.8],            # Subsample ratio of the training instance (to prevent overfitting)
-    'colsample_bytree': [0.6, 0.8],     # Subsample ratio of columns when constructing each tree
-    'gamma': [0, 0.1],                  # Minimum loss reduction required to make a further partition on a leaf node
+    'n_estimators': [100,300],          # Number of trees (lower values for quicker training)
+    'max_depth': [5],             # Maximum depth of each tree (shallower trees to avoid overfitting)
+    'learning_rate': [0.1],       # Learning rate (smaller values for more gradual training)
+    'subsample': [0.7],            # Subsample ratio of the training instance (to prevent overfitting)
+    'colsample_bytree': [0.7],     # Subsample ratio of columns when constructing each tree
+    'gamma': [0.1],                  # Minimum loss reduction required to make a further partition on a leaf node
 }
+
+# hyperparameter_grid_XGboost = {
+#     'n_estimators': [50, 100],          # Number of trees (lower values for quicker training)
+#     'max_depth': [3, 5, 7],             # Maximum depth of each tree (shallower trees to avoid overfitting)
+#     'learning_rate': [0.01, 0.1],       # Learning rate (smaller values for more gradual training)
+#     'subsample': [0.6, 0.8],            # Subsample ratio of the training instance (to prevent overfitting)
+#     'colsample_bytree': [0.6, 0.8],     # Subsample ratio of columns when constructing each tree
+#     'gamma': [0, 0.1],                  # Minimum loss reduction required to make a further partition on a leaf node
+# }
 

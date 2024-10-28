@@ -3,14 +3,16 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
-import randomForest_read_in_models
-import csv_to_dataframes
+# import randomForest_read_in_models
+# import csv_to_dataframes
 import randomForest_Class
+import A_XGBoost_Class
+from A_XGBoost_Class import XGBoostModel
 from randomForest_Class import RandomForestModel
 import public_variables
 
 from sklearn.preprocessing import StandardScaler
-from csv_to_dataframes import csvfiles_to_dfs
+# from csv_to_dataframes import csvfiles_to_dfs
 import csv_to_dictionary
 
 import matplotlib.pyplot as plt
@@ -26,34 +28,51 @@ import math
 import re
 import os
 
-def standardize_dataframe(df):
-    """Standardize the dataframe features."""
-    scaler = StandardScaler()
-    standardized_data = scaler.fit_transform(df)
-    standardized_df = pd.DataFrame(standardized_data, columns=df.columns)
-    return standardized_df
-
-def Kfold_Cross_Validation(dfs_in_dic,targets, hyperparameter_grid, kfold_, scoring_): #add targets
-    print("kfold new")
+def Kfold_Cross_Validation_incl_grouped(dfs_in_dic, hyperparameter_grid, kfold_, scoring_):
+    print("kfold new + grouped")
     
-    columns_ = ["id","mean_test_score","std_test_score","params"]
+    columns_ = ["mol_id", "mean_test_score", "std_test_score", "params"]
     split_columns = [f'split{i}_test_score' for i in range(kfold_)]
     columns_ += split_columns
     
-    ModelResults_ = pd.DataFrame(columns=columns_) #NOTE needs to be a pd dataframe
-    models: Dict[str, RandomForestModel]= {} #[str, RandomForestModel] contains the type of keys and values
+    ModelResults_ = pd.DataFrame(columns=columns_)
+    models = {}
+
     for name, df in dfs_in_dic.items():
-        
-        X_train = df
+        print(name)
+
+        targets = df['PKI']
+        unique_mol_ids = df['mol_id'].unique()
         
         kf = KFold(n_splits=kfold_, shuffle=True, random_state=1)
+        splits = list(kf.split(unique_mol_ids))
         
-        rf_model = RandomForestModel(n_trees=100, max_depth=10, min_samples_split=5, max_features='sqrt')
+        custom_splits = []
+        for train_mol_indices, test_mol_indices in kf.split(unique_mol_ids):
+            # Get actual molecule IDs for train and test sets
+            train_mols = unique_mol_ids[train_mol_indices]
+            test_mols = unique_mol_ids[test_mol_indices]
+            
+            # Map back to the full dataset indices (6000 rows)
+            train_indices = df[df['mol_id'].isin(train_mols)].index
+            test_indices = df[df['mol_id'].isin(test_mols)].index
+            
+            # Append as a tuple of arrays
+            custom_splits.append((train_indices, test_indices))
+        # print('custom splits')
+        # print(custom_splits[1][0][0:40])
+        # print(custom_splits[1][1][0:40])
+        # print(targets[0:40])
+        # Initial model and grid search outside the loop
+        rf_model = XGBoostModel()
         rf_model.model.random_state = 42
+        df = df.drop(columns=['mol_id','PKI','conformations (ns)'], axis=1, errors='ignore')
         
-        grid_search = rf_model.hyperparameter_tuning(X_train,targets,hyperparameter_grid,cv=kf,scoring_=scoring_)
+        #NOTE: careful: conformations (ns) is still in it
+        grid_search = rf_model.hyperparameter_tuning(df,targets,hyperparameter_grid,cv=custom_splits,scoring_=scoring_)
         
-        df_results = pd.DataFrame(grid_search.cv_results_) #what results? of cv. so the 10 results
+        df_results = pd.DataFrame(grid_search.cv_results_) #what results? of cv. so the 10 results and 8 rows (each row was a set of hyperparameters)
+        
         #grid_search.best_index_ = the index that is best of the x amount of hyperparameter combinations
         result = df_results.loc[grid_search.best_index_, columns_[1:]] #1: because we dont want to include 'time'
         #df_results = dataframe with 'hyperparametercombinations' amount of rows, and each row has mean_test_score and split_test_scores etc
@@ -64,90 +83,13 @@ def Kfold_Cross_Validation(dfs_in_dic,targets, hyperparameter_grid, kfold_, scor
             result[f'split{i}_test_score'] = abs(result[f'split{i}_test_score'])
 
         result_df_row = result.to_frame().T
-        result_df_row['id'] = name #add a column of the '1ns' etc
+        result_df_row['mol_id'] = name #add a column of the '1ns' etc
         result_df_row = result_df_row[columns_] #change the order to the one specified above
 
         #make 1 big dataframe for all the '0ns' '1ns' 'rdkit_min' etc
         ModelResults_ = pd.concat([ModelResults_, result_df_row], ignore_index=True)
         models[name] = rf_model
     return models, ModelResults_
-
-
-def reduced_model(rf_model,X_train,y_train,kf,scoring):
-    importances = rf_model.top_features #still in order of feature 1 2 3 4 ...
-            
-    sorted_indices = importances.index.tolist() #list of indices of most important features first [28, 71, 16 ... ] corresponding to indices in 'importances' with highest features
-    cumulative_importance = np.cumsum(importances[sorted_indices]) * 100 #list of the sum of the importances.
-    
-    threshold = 75
-    top_indices = cumulative_importance[cumulative_importance <= threshold].index.tolist()
-    cv_scores = []
-
-    for train_index, val_index in kf.split(X_train):
-        X_train_fold, X_val_fold = X_train.iloc[train_index], X_train.iloc[val_index]
-        y_train_fold, y_val_fold = y_train.iloc[train_index], y_train.iloc[val_index]
-        
-        # Extract top 25 features for current fold
-        X_train_fold_top25 = X_train_fold[top_indices]
-        X_val_fold_top25 = X_val_fold[top_indices]
-        
-        # Initialize and fit RandomForestRegressor
-        rf_model_reduced = RandomForestModel(n_trees=rf_model.n_trees,
-                                   max_depth=rf_model.max_depth,
-                                   min_samples_split=rf_model.min_size,
-                                   max_features=rf_model.max_features)
-        rf_model_reduced.fit(X_train_fold_top25, y_train_fold)
-        
-        # Evaluate on validation set
-        rmse, mse, r2 = rf_model_reduced.evaluate(X_val_fold_top25, y_val_fold)
-        
-        # Store or print the RMSE for current fold
-        if scoring.lower().strip() == 'neg_root_mean_squared_error':
-            cv_scores.append(rmse)
-        elif scoring.lower().strip() == 'r2':
-            cv_scores.append(r2)
-        else:
-            print("NO SCORING: ERROR")
-    return rf_model_reduced, cv_scores
-
-
-def save_models_reduced(modellist,save_path,k,scoring):
-    # Full path to the file using pathlib.Path
-    all_models_path = save_path / f'RF_reduced_Allmodels_k{k}_{scoring}.pkl'
-
-    with open(all_models_path, 'wb') as file:
-        pickle.dump(modellist, file)
-    return
-
-
-def visualize_correlation_matrix(correlation_matrix,save_plot_folder,kfold_,scoring_):
-    """Visualize the correlation matrix."""
-    plt.figure(figsize=(10, 8))
-    plt.imshow(correlation_matrix, cmap='coolwarm', vmin=-1, vmax=1)
-    plt.colorbar()
-    plt.title('Correlation Matrix')
-    plt.xticks(range(len(correlation_matrix.columns)), correlation_matrix.columns, rotation=90)
-    plt.yticks(range(len(correlation_matrix.columns)), correlation_matrix.columns)
-    plt.tight_layout()
-    plt.savefig( save_plot_folder / f'plot_kfold_{kfold_}_scoring_{scoring_}.png')
-    plt.show()
-
-def visualize_scores(results_df, kfold_,scoring_, save_plot_folder):
-    plt.figure(figsize=(12, 6))
-
-    x_pos = np.arange(len(results_df))
-    bars = plt.bar(x_pos, results_df['mean_test_score'], yerr=results_df['std_test_score'], capsize=5, color='skyblue', edgecolor='black', alpha=0.7)
-    plt.title(f'Mean Test Scores with Standard Deviations (Kfold={kfold_}, Scoring={scoring_})')
-    plt.xlabel('Index')
-    plt.ylabel('Mean Test Score')
-    plt.xticks(ticks=x_pos, labels=[f'Model {i}' for i in x_pos], rotation=45)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-
-    # Show plot
-    plt.tight_layout()
-    plt.savefig( save_plot_folder / f'barplot_kfold_{kfold_}_scoring_{scoring_}.png')
-    return
-#read in dataframe
 
 def strip_dataframes(dataframes,feature_index_list_of_lists):
     stripped_dfs = []
@@ -233,60 +175,53 @@ def save_originalmodels_hdf5(Modelresults_path, dic_models, dataframes):
                 store[model_key] = pd.Series([str(model) for model in models_list])
     return
 
-def strip_dataframes(df):
+def save_dataframes_to_csv(dic_with_dfs,save_path):
+    save_path.mkdir(parents=True, exist_ok=True)
     
-    return df
+    for name, df in dic_with_dfs.items():
+        print(f"save dataframe: {name}")
+        df.to_csv(save_path / f'{name}.csv', index=False)
+
+def save_modelresults(modelresults, save_path):
+    return
 
 def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as default, but can always change it to something else.
     descriptors = public_variables.RDKIT_descriptors_            ## why, just did this but cant remember. for name
-
+    print(dfs_path)
     #create folder for storing the models and results from them
-    Modelresults_path = dfs_path / public_variables.Modelresults_folder_
+    Modelresults_path = dfs_path / f'{public_variables.Modelresults_folder_}_XGB'
     Modelresults_path.mkdir(parents=True, exist_ok=True)
 
 
-    dfs_descriptors_only_path = public_variables.dfs_descriptors_only_path_ # e.g., 'dataframes_JAK1_WHIM_i1'
-    dfs_reduced_path = public_variables.dfs_reduced_path_  # e.g., 'dataframes_JAK1_WHIM_i1_t0.85'
+    #l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
+    l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
 
-    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
-    
+    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
+    print(dfs_in_dic.keys())
     #remove the mol_id and PKI #NOTE: empty rows have already been removed beforehand, but still do it just to be sure!
-    columns_to_drop = ['mol_id', 'PKI']
+    columns_to_drop = ['mol_id', 'PKI', "conformations (ns)"]
     
     #order the keys in the dictionary
-    sorted_keys_list = csv_to_dictionary.get_sorted_folders_namelist(list(dfs_in_dic.keys())) #RDKIT first
+    sorted_keys_list = csv_to_dictionary.get_sorted_columns(list(dfs_in_dic.keys())) #RDKIT first
     dfs_in_dic = {key: dfs_in_dic[key] for key in sorted_keys_list if key in dfs_in_dic} #order
     print(sorted_keys_list)
-
-    #clean dataframes just to be sure, also remove csv files if they dont have 'PKI' column + change the order correctly
-    for name, df in list(dfs_in_dic.items()):  # Use list() to avoid runtime dictionary size change
-        df = df.dropna()
-        if 'PKI' in df.columns:  # Check if 'PKI' column exists
-            targets = df['PKI']
-        else:
-            print('else')
-            del dfs_in_dic[name]  # Remove DataFrame if 'PKI' column is not found
-            continue
-        df = df.drop(columns=[col for col in columns_to_drop if col in df.columns])  # Avoid inplace=True
-        df = df.reset_index(drop=True)  # Avoid inplace=True
-        dfs_in_dic[name] = df
     
     parameter_grid = public_variables.parameter_grid_ #kfolds (5, 10) and metrics (rmse, r2)
-    hyperparameter_grid = public_variables.hyperparameter_grid_ #n_estimators, max_depth etc.
+    hyperparameter_grid = public_variables.hyperparameter_grid_XGboost #n_estimators, max_depth etc.
+    print(hyperparameter_grid)
 
     param_combinations = list(itertools.product(parameter_grid['kfold_'], parameter_grid['scoring_']))
-
+    print(param_combinations)
     dic_models = {}
 
     for kfold_value, scoring_value in param_combinations:
         print(f"kfold_: {kfold_value}, scoring_: {scoring_value[0]}")
-        models_dic, Modelresults_ = Kfold_Cross_Validation(dfs_in_dic, targets, hyperparameter_grid, kfold_=kfold_value, scoring_=scoring_value[0])
-        print(models_dic)
-        #TODO: make it so that it does 5 times the kfold so we have plenty of different models to get a good average
+        models_dic, Modelresults_ = Kfold_Cross_Validation_incl_grouped(dfs_in_dic, hyperparameter_grid, kfold_=kfold_value, scoring_=scoring_value[0])
+        print('done with Kfold cross validation')
         csv_filename = f'results_K{kfold_value}_{scoring_value[1]}_{descriptors}.csv'
         Modelresults_.to_csv(Modelresults_path / csv_filename, index=False)
         
-        #instantialise the dic of dictionaries to store all models eventually.
+        #instantialize the dic of dictionaries to store all models eventually.
         #TODO: make it so that the dataframe is also stored with it. no. later perhaps
         modelnames = f'RF_Allmodels_k{kfold_value}_{scoring_value[1]}'
         dic_models[modelnames] = {}
@@ -303,11 +238,22 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
 
     #TODO: general script that contains save models instead of in randomforest_read_in_models
     #save_originalmodels_hdf5(Modelresults_path, dic_models, dfs_stripped)
-    randomForest_read_in_models.save_model_dictionary(Modelresults_path,'original_models_dic.pkl',dic_models)
+    # randomForest_read_in_models.save_model_dictionary(Modelresults_path,'original_models_dic.pkl',dic_models)
     # return
 
     return
 
 if __name__ == "__main__":
-    
-    main()
+    # bigdf = pd.read_csv(public_variables.dataframes_master_ / 'conformations_1000_molid.csv')
+    # dic = {}
+    # targets = bigdf['PKI']
+    # print(targets)
+    # dic['total_df_ordered_by_moldid.csv'] = bigdf
+    # print(dic.keys())
+    # Kfold_Cross_Validation_incl_grouped(dic,targets, public_variables.hyperparameter_grid_, 5, 'neg_root_mean_squared_error')
+    # main()
+    main(public_variables.dfs_descriptors_only_path_)
+    # main(public_variables.dfs_reduced_path_)
+    # main(public_variables.dfs_reduced_and_MD_path_)
+    # main(public_variables.dfs_MD_only_path_)
+
