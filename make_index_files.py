@@ -48,7 +48,7 @@ from pathlib import Path
 
 def make_PSA_index_files(MD_path):
     os.chdir(MD_path)
-    for padded_num in (f"{i:03}" for i in range(1, 616)): #not abstract yet, not necessary
+    for padded_num in (f"{i:03}" for i in range(1,857)): #not abstract yet, not necessary
         pdb_file = MD_path / padded_num / f'{padded_num}_prod.pdb'
         ndx_file = MD_path / padded_num / f'index_PSA_{padded_num}.ndx'
         os.chdir(MD_path / padded_num)
@@ -78,7 +78,7 @@ def run_gmx_psa_sasa(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 616)):
+    for padded_num in (f"{i:03}" for i in range(1, 857)):
         os.chdir(MD_path / f'{padded_num}')
         sasa_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -150,7 +150,7 @@ def run_gmx_dipoles(MD_path, output_path_TDM, output_path_epsilon):
     output_path_TDM.mkdir(parents=True, exist_ok=True)  # Create the folder for storing xvg files
     output_path_epsilon.mkdir(parents=True, exist_ok=True)
     # Loop over the molecules (using padded numbers)
-    for padded_num in (f"{i:03}" for i in range(1, 616)):
+    for padded_num in (f"{i:03}" for i in range(1, 857)):
         
         os.chdir(MD_path / f'{padded_num}')
         dipole_file = output_path_TDM / f'{padded_num}.xvg'
@@ -169,7 +169,7 @@ def run_gmx_dipoles(MD_path, output_path_TDM, output_path_epsilon):
             # Run the command to calculate the dipole moment
             subprocess.run(command, shell=True, input=user_input, capture_output=True, text=True)
         else:
-            print('test3')
+            print(padded_num)
             continue
 
     return
@@ -278,7 +278,7 @@ def run_gmx_gyrate(MD_path, output_path):
     output_path.mkdir(parents=True, exist_ok=True)  # Create the folder for storing xvg files
 
     # Loop over the molecules (using padded numbers)
-    for padded_num in (f"{i:03}" for i in range(1, 616)):
+    for padded_num in (f"{i:03}" for i in range(1, 857)):
         os.chdir(MD_path / f'{padded_num}')
         gyrate_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -352,7 +352,7 @@ def make_index_files(MD_path):
     os.chdir(MD_path)
     user_input = 'q'
 
-    for padded_num in (f"{i:03}" for i in range(1, 616)): #not abstract yet, not necessary
+    for padded_num in (f"{i:03}" for i in range(1, 900)): #not abstract yet, not necessary
         tpr_file = MD_path / padded_num / f'{padded_num}_prod.tpr'
         ndx_file = MD_path / padded_num / f'{padded_num}_index.ndx'
         os.chdir(MD_path / padded_num)
@@ -383,7 +383,7 @@ def calculate_hbond(MD_path):
     os.chdir(MD_path)
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 616)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
         # Define file paths
         tpr_file = MD_path / padded_num / f'{padded_num}_prod.tpr'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'  # Trajectory file
@@ -430,7 +430,7 @@ def calculate_hbond_dataframe_trajectory(MD_path, lig_conf_system_path):
     final_df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds'])
     result_list = []
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 616)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -484,7 +484,7 @@ def calculate_hbond_dataframe(MD_path, lig_conf_system_path):
     df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds', 'average_hbond_distance'])
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 616)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -542,7 +542,7 @@ def calculate_sasa(MD_path, lig_conf_system_path):
     df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds', 'average_hbond_distance'])
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 616)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -625,7 +625,8 @@ def run_gmx_sasa(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 616)):
+    for padded_num in (f"{i:03}" for i in range(1, 857)):
+        print(padded_num)
         os.chdir(MD_path / f'{padded_num}')
         sasa_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -694,7 +695,7 @@ def run_gmx_rms(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 616)):
+    for padded_num in (f"{i:03}" for i in range(1, 857)):
         os.chdir(MD_path / f'{padded_num}')
         rmsd_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -866,7 +867,7 @@ def main():
     MDsimulations_path = public_variables.MDsimulations_path_
     
     #create ndx files
-    # make_index_files(MDsimulations_path)
+    #make_index_files(MDsimulations_path)
     lig_conf_system_path = public_variables.base_path_ / 'ligand_conformations_system'
     
     # calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
@@ -875,8 +876,10 @@ def main():
     # pdb_file = Path('/home/ben/Download/Afstuderen0/MDsimulations/001/hbnum.xvg')
     # print(read_out_hbnum(pdb_file))
 
-    # calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
-    # calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
+    #calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
+
+    #use this for 
+    calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
 
     outputdir = public_variables.energyfolder_path_ / 'SASA'
     # run_gmx_sasa(MDsimulations_path, outputdir) #NOTE: done
@@ -894,21 +897,21 @@ def main():
     #NOTE: epsilon and total dipole moment
     # outputdir_TDM = public_variables.energyfolder_path_ / 'Total_dipoleMoment'
     # outputdir_epsilon = public_variables.energyfolder_path_ / 'epsilon'
-    # # run_gmx_dipoles(MD_path=MDsimulations_path, output_path_TDM=outputdir_TDM, output_path_epsilon=outputdir_epsilon)
+    # run_gmx_dipoles(MD_path=MDsimulations_path, output_path_TDM=outputdir_TDM, output_path_epsilon=outputdir_epsilon)
     # Total_dipole_moment_xvg_files_to_csvfiles(energyfolder_path, totaldipoleMoment_xvgfolder_path=outputdir_TDM)
     # epsilon_xvg_files_to_csvfiles(energyfolder_path, epsilon_xvgfolder_path=outputdir_epsilon)
 
     outputdir_PSA = public_variables.energyfolder_path_ / 'PSA'
-    # calculate_psa_from_trajectory(MDsimulations_path, output_file=outputdir_PSA)
+    #calculate_psa_from_trajectory(MDsimulations_path, output_file=outputdir_PSA) #dont use this i think
     # make_PSA_index_files(MDsimulations_path)
-    outputdir = public_variables.energyfolder_path_ / 'PSA'
+    # outputdir = public_variables.energyfolder_path_ / 'PSA'
     # run_gmx_psa_sasa(MDsimulations_path, outputdir)
     # psa_xvg_files_to_csvfiles(energyfolder_path, outputdir)
 
-    file_list = ['hbonds.csv', 'rms.csv', 'sasa.csv', 'psa.csv', 'epsilon.csv', 'gyration.csv', 'dipole_moment_total.csv',f'MD_features_{public_variables.dataset_protein_}.csv']
-    folder_path = public_variables.energyfolder_path_
-    dfs = concatenate_csv_files(folder_path, file_list)
-    dfs.to_csv(public_variables.energyfolder_path_ / 'MD_output.csv', index=False)
+    # file_list = ['hbonds.csv', 'rms.csv', 'sasa.csv', 'psa.csv', 'epsilon.csv', 'gyration.csv', 'dipole_moment_total.csv',f'MD_features_{public_variables.dataset_protein_}.csv']
+    # folder_path = public_variables.energyfolder_path_
+    # dfs = concatenate_csv_files(folder_path, file_list)
+    # dfs.to_csv(public_variables.energyfolder_path_ / 'MD_output.csv', index=False)
     return
 
 main()

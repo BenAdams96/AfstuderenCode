@@ -100,10 +100,11 @@ def main(MDsimulations_path = public_variables.MDsimulations_path_, output_folde
     print(invalid_mols)
     print('done getting molecules')
     #Define frames to extract
-    frames_to_extract = list(range(0,1001,int(public_variables.timeinterval_snapshots*100)))  # every 1ns extract frame for 10ns. so [0ns,1ns,2ns,...,10ns]
-    
+    frames_to_extract = list(range(0,1001,1))  # every 1ns extract frame for 10ns. so [0ns,1ns,2ns,...,10ns]
+    valid_mols_sorted = sorted(valid_mols, key=int)
+    print(valid_mols_sorted)
     # Process trajectories
-    trj_to_pdb(valid_mols, frames_to_extract,base_path, MDsimulations_path, output_folder)
+    trj_to_pdb(valid_mols_sorted[6:], frames_to_extract,base_path, MDsimulations_path, output_folder)
     print(f"number of molecules: {len(all_molecules_list)}")
     print(f"number of molecules with succesful simulations: {len(valid_mols)}")
     print(f"Invalid molecules: {invalid_mols}")

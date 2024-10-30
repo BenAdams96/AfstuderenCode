@@ -2,20 +2,23 @@ from pathlib import Path
 
 #basic paths
 base_path_ = Path(__file__).resolve().parent.parent
-MDsimulations_folder_ = 'MDsimulations_JAK1'
-MDsimulations_path_ = base_path_.parents[0] / MDsimulations_folder_
+
 print('base path')
 print(base_path_)
 #dataset related variable names
 model_ = 'RF'
 RDKIT_descriptors_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
-dataset_protein_ = 'JAK1'   #VARIABLE
-dataset_name_ = dataset_protein_ + 'dataset.csv' #NOTE: remove later
-dataset_csvfile_ = dataset_protein_ + 'dataset.csv'
+dataset_protein_ = 'GSK3'   #VARIABLE
+dataset_name_ = dataset_protein_ + '_dataset.csv' #NOTE: remove later
+dataset_csvfile_ = dataset_protein_ + '_dataset.csv'
 dataset_csvfile_path_ = base_path_ / dataset_csvfile_
 
 timeinterval_snapshots = 1 #in ns #VARIABLE (smallest value possible =  0.01 ns which is equal to 10ps)
 correlation_threshold_ = 0.85
+
+#MD simulations folder file
+MDsimulations_folder_ = f'MDsimulations_{dataset_protein_}'
+MDsimulations_path_ = base_path_.parents[0] / MDsimulations_folder_
 
 #prepare_energy_files
 energyfolder_path_ = base_path_ / f'energyfolder_files_{dataset_protein_}'

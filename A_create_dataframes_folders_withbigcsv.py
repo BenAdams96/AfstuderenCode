@@ -181,7 +181,7 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
 
     # #check how many invalids there are which we need to remove from the dataframes
     all_molecules_list, valid_mols, invalid_mols = trj_to_pdbfiles.get_molecules_lists(MDsimulations_path)
-
+    print(all_molecules_list)
     #create the dataframes, which eventually will be placed in 'dataframes_JAK1_WHIM' and also add the targets to the dataframes.
     df_sorted_by_conf = create_full_dfs(ligand_conformations_path, df_targets, descriptors, all_molecules_list)
     df_sorted_by_molid = df_sorted_by_conf.sort_values(by=['mol_id', 'conformations (ns)']).reset_index(drop=True)
