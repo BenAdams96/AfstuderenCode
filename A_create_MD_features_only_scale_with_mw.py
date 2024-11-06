@@ -14,10 +14,55 @@ from pathlib import Path
 import shutil
 from itertools import product
 
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import Descriptors3D
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import Descriptors
 import pandas as pd
 import math
 import re
 import os
+
+def calculate_molecular_weight_from_pdb(pdb_file):
+    """
+    Calculate the molecular weight of a molecule from a PDB file.
+    
+    Parameters:
+    - pdb_file: str, path to the PDB file
+    
+    Returns:
+    - molecular_weight: float, molecular weight of the molecule
+    """
+    # Read the molecule from the PDB file
+    mol = Chem.MolFromPDBFile(pdb_file)
+    if mol is not None:
+        return Descriptors.ExactMolWt(mol)  # Use the correct import
+    else:
+        print(f"Could not read molecule from {pdb_file}.")
+        return None
+
+def calculate_molecular_weights(folder_path):
+    """
+    Calculate the molecular weights of all PDB files in a specified folder.
+    
+    Parameters:
+    - folder_path: str, path to the folder containing PDB files
+    
+    Returns:
+    - weights: list of tuples, each containing (filename_without_extension, molecular_weight)
+    """
+    weights = []
+    for filename in os.listdir(folder_path):
+        
+        if filename.endswith('.pdb'):
+            pdb_file_path = os.path.join(folder_path, filename)
+            mol_weight = calculate_molecular_weight_from_pdb(pdb_file_path)
+            if mol_weight is not None:
+                # Create a tuple with the filename without the extension and the molecular weight as an integer
+                weights.append((int(filename[:-4]), mol_weight))  # Remove the last 4 characters (.pdb)
+
+    return weights
 
 def extract_k_and_scoring(filename):
     # Use regex to find the pattern 'k' followed by digits and the scoring method
@@ -208,7 +253,40 @@ def MD_features_implementation(base_path):
         #     #dic_models[x].update(reduced_models_dic)
     return
 
+def standardize_dataframe(df):
+    """Preprocess the dataframe by handling NaNs and standardizing."""
+    # Handle NaNs: drop rows with NaNs or fill them
+    df_cleaned = df.dropna()  # or df.fillna(df.mean())
+    
+    # Identify which non-feature columns to keep
+    non_feature_columns = ['mol_id','PKI' 'conformations (ns)']
+    existing_non_features = [col for col in non_feature_columns if col in df_cleaned.columns]
+    
+    # Drop non-numeric target columns if necessary
+    features_df = df_cleaned.drop(columns=existing_non_features, axis=1, errors='ignore')
+    
+    # Standardize the dataframe
+    scaler = StandardScaler()
+    features_scaled_df = pd.DataFrame(scaler.fit_transform(features_df), columns=features_df.columns)
+    
+    # Concatenate the non-feature columns back into the standardized dataframe
+    standardized_df = pd.concat([df_cleaned[existing_non_features], features_scaled_df], axis=1)
+    
+    return standardized_df
 
+def calculate_correlation_matrix(df):
+    """Calculate the correlation matrix of a standardized dataframe."""
+    df = df.drop(columns=['mol_id','PKI','conformations (ns)'], axis=1, errors='ignore')
+    return df.corr()
+
+
+def correlation_matrix_single_csv(df):
+    # Preprocess the dataframe: handle NaNs and standardize
+    st_df = standardize_dataframe(df)
+    
+    # Calculate and visualize correlation matrix for the standardized dataframe
+    correlation_matrix = calculate_correlation_matrix(st_df)
+    return st_df, correlation_matrix
 
 def main():
     base_path = public_variables.base_path_
@@ -222,8 +300,29 @@ def main():
     folder_for_results_path =  Path(base_path) / public_variables.dfs_reduced_path_ / public_variables.Modelresults_folder_
     #dic_models = randomForest_read_in_models.read_in_model_dictionary(folder_for_results_path, 'original_models_dic.pkl')
 
-    #implement MD features into the right ones. how? #NOTE: via combining the csv files!
-    MD_features_implementation(base_path)
+    MD_only_scaled_path = public_variables.dataframes_master_ / 'MD only scaled mw'
+    MD_only_scaled_path.mkdir(parents=True, exist_ok=True)
+
+    folder_path = public_variables.base_path_ / 'pdb'
+    molecular_weights = calculate_molecular_weights(folder_path)
+    molecular_weights_df = pd.DataFrame(molecular_weights, columns=['mol_id', 'molecular_weight'])
+
+    dataset_protein = 'JAK1'
+    csv_MDfeatures_file = public_variables.base_path_ / f'energyfolder_files_{dataset_protein}' / 'MD_output.csv'
+    big_df = pd.read_csv(csv_MDfeatures_file)
+    merged_dataframe = pd.merge(big_df, molecular_weights_df, on='mol_id', how='left')
+    merged_dataframe.to_csv(MD_only_scaled_path / 'conformations_1000.csv', index=False)
+    
+    
+    st_df, correlation_matrix = correlation_matrix_single_csv(merged_dataframe)
+    correlation_with_mw = correlation_matrix['molecular_weight']
+    print(correlation_with_mw)
+    # Identify features with correlation >= 0.8 (excluding 'molecular_weight' itself)
+    correlated_features = correlation_with_mw[correlation_with_mw.abs() >= 0.4].index.tolist()
+    correlated_features.remove('molecular_weight')  # Remove the molecular_weight itself if it's included
+    print(correlated_features)
+    # #implement MD features into the right ones. how? #NOTE: via combining the csv files!
+    # MD_features_implementation(base_path)
 
     #print(dic_models)
     

@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
+import randomForest_read_in_models
 import random
 import public_variables
 import csv_to_dataframes
@@ -198,30 +199,84 @@ def remove_constant_columns_from_dfs(dfs_dictionary):
         cleaned_dfs[key] = non_constant_columns
     return cleaned_dfs
 
-def main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_threshold = public_variables.correlation_threshold_):
-    dfs_reduced_path = public_variables.dataframes_master_ / f'reduced_t{correlation_threshold}'  # e.g., 'dataframes_JAK1_WHIM
-    dfs_reduced_path.mkdir(parents=True, exist_ok=True)
+def reintroduce_top_correlated_features(top_features, correlation_matrix, original_df, correlation_threshold=0.8, num_top_features=5):
+    features_to_reintroduce = set()
+    print(top_features)
+    print(correlation_matrix)
+    original_df = original_df.drop(['mol_id', 'PKI', 'conformations (ns)'], axis=1, errors='ignore')
+    # Get the top N features based on importance
+    top_feature_indices = top_features.index[:num_top_features]
+    
+    for feature in top_feature_indices:
+        correlations = correlation_matrix[feature]
+        
+        # Find strongly correlated features, excluding the feature itself
+        correlated_features = correlations[correlations.abs() >= correlation_threshold].index
+        correlated_features = correlated_features[correlated_features != feature]
+        
+        print(f'Analyzing Feature: {feature}')
+        print(f'Correlated Features: {correlated_features.tolist()}')
+        
+        # Collect correlated values
+        correlated_values = correlations[correlated_features]
+        
+        # Keep track of the lowest correlated feature that is not in top_features
+        for _ in range(len(correlated_features)):
+            # Get the feature with the lowest absolute correlation
+            lowest_corr_feature = correlated_values.abs().idxmin()
+            lowest_corr_value = correlated_values[lowest_corr_feature]
+            
+            # Check if it's already in the reduced features
+            if lowest_corr_feature not in top_features.index:
+                print(f'Adding feature: {lowest_corr_feature} with correlation value: {lowest_corr_value}')
+                features_to_reintroduce.add(lowest_corr_feature)
+                break  # Exit the loop once we found a valid feature
 
-    dfs_dictionary = csv_to_dictionary.main(dfs_path,exclude_files=['concat_hor.csv','concat_ver.csv', 'big.csv'])#,'conformations_1000.csv','conformations_1000_molid.csv'])
-    print(dfs_dictionary.keys())
-    dfs_dictionary = remove_constant_columns_from_dfs(dfs_dictionary)
+            # Remove the feature from the correlated_values to check the next one
+            correlated_values = correlated_values.drop(lowest_corr_feature)
+
+    # Filter the original DataFrame to include only the reintroduced features
+    reintroduced_df = original_df.loc[:, original_df.columns.isin(features_to_reintroduce)]
+
+    print(reintroduced_df)
+    return reintroduced_df
+
+def main(dfs_reduced_path = public_variables.dfs_reduced_path_):
     
-    standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dfs_dictionary)
+    # dfs_dictionary = csv_to_dictionary.main(dfs_reduced_path,exclude_files=['concat_hor.csv','concat_ver.csv', 'big.csv'])#,'conformations_1000.csv','conformations_1000_molid.csv'])
+    # print(dfs_dictionary.keys())
+    # dfs_dictionary = remove_constant_columns_from_dfs(dfs_dictionary)
     
-    # Reduce the dataframes based on correlation
-    reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dfs_dictionary, threshold=correlation_threshold)
-    #reduced dataframes including mol_ID and PKI. so for 0ns 1ns etc. 
-    save_dataframes_to_csv(reduced_dfs_in_dic, save_path=dfs_reduced_path)
+    
+    # standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dfs_dictionary)
+    
+    # # Reduce the dataframes based on correlation
+    # reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dfs_dictionary, threshold=correlation_threshold)
+    # #reduced dataframes including mol_ID and PKI. so for 0ns 1ns etc. 
+    # save_dataframes_to_csv(reduced_dfs_in_dic, save_path=dfs_reduced_path)
+
+    models_dict = randomForest_read_in_models.read_in_model_dictionary(dfs_reduced_path / f'{public_variables.Modelresults_folder_}RF','original_models_dic.pkl')
+    dfs_dictionary = csv_to_dictionary.main(public_variables.dfs_descriptors_only_path_,exclude_files=['concat_hor.csv','concat_ver.csv', 'big.csv','conformations_1000.csv','conformations_1000_molid.csv'])
+    for key, model in models_dict['RF_Allmodels_k10_R-squared (R²)']['original models'].items():
+        print(f'{key = }')
+        top_2_features_of_model = model.top_features.head(2)
+        
+        df = dfs_dictionary[key]
+        print(df.columns)
+        st_df, correlation_matrix = correlation_matrix_single_csv(df)
+        reintroduced_df = reintroduce_top_correlated_features(top_features = model.top_features, correlation_matrix=correlation_matrix, original_df=df)
+        print(reintroduced_df)
+        print('done')
     return
 
 if __name__ == "__main__":
-    main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_threshold=0.65)
+    main(dfs_reduced_path = public_variables.dfs_reduced_path_)
     
-    bigdf = pd.read_csv(public_variables.dataframes_master_ / 'conformations_1000.csv')
-    dic = {}
-    dic['conformations_1000.csv'] = bigdf
-    standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dic)
-    print(correlation_matrices_dic)
-    reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dic, threshold=0.65)
-    save_dataframes_to_csv(reduced_dfs_in_dic, save_path=public_variables.dfs_reduced_path_)
+    # bigdf = pd.read_csv(public_variables.dfs_descriptors_only_path_ / 'total_df_ordered_by_conformation.csv')
+    # dic = {}
+    # dic['total_df_ordered_by_conformation.csv'] = bigdf
+    # standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dic)
+    # print(correlation_matrices_dic)
+    # reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dic, threshold=0.85)
+    # save_dataframes_to_csv(reduced_dfs_in_dic, save_path=public_variables.dfs_reduced_path_)
 

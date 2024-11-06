@@ -28,7 +28,7 @@ def preprocess_dataframe(df):
     df_cleaned = df.dropna()  # or df.fillna(df.mean())
     
     # Drop non-numeric target columns if necessary
-    df_notargets = df_cleaned.drop(['mol_id', 'PKI'], axis=1, errors='ignore')
+    df_notargets = df_cleaned.drop(['mol_id', 'PKI', 'conformations (ns)'], axis=1, errors='ignore')
     
     # Standardize the dataframe
     scaler = StandardScaler()
@@ -90,4 +90,6 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):
     return
 
 if __name__ == "__main__":
-    main(dfs_path = public_variables.dfs_descriptors_only_path_)
+    # main(dfs_path = public_variables.dfs_descriptors_only_path_)
+    main(dfs_path = public_variables.dfs_reduced_path_)
+    main(dfs_path = public_variables.dfs_reduced_and_MD_path_)

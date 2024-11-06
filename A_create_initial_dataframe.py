@@ -45,12 +45,10 @@ def count_ns_dirs(ligandconformations_path):
         return 0
     
 def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_molecules_list):
-    ''' create the WHIM dataframes for every molecule for every timestep (xdirs)
-        first goes over the timesteps, then every molecule within that timestep
-        output: dfs: x amount of dataframes with the descriptors of the molecule for every timestep including mol_id and PKI
+    ''' Create the WHIM dataframes for every molecule for every timestep (xdirs)
+        First goes over the timesteps, then every molecule within that timestep
+        Output: total_df_conf_order - dataframe with the descriptors of the molecule for every timestep including mol_id and PKI
     '''
-    dfs = []
-    dic_with_dfs = {}
     if descriptors == 'WHIM':
         num_columns = 114
     elif descriptors == 'GETAWAY':
@@ -58,55 +56,58 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
     else:
         raise ValueError("Error: Choose a valid descriptor")
     
-    #NOTE: RDKIT will be placed in the first index
-    sorted_folders = get_sorted_folders(ligand_conformations_path) #all folders/paths in 'ligand_conformations_JAK1' sorted from 0ns to 10ns
-    print(len(sorted_folders))
-    total_df_conf_order = pd.DataFrame(index=range(0, len(sorted_folders) * len(all_molecules_list)),
-                        columns=['mol_id', 'PKI', 'conformations (ns)'] + list(range(0, num_columns)))
+    sorted_folders = get_sorted_folders(ligand_conformations_path)  # Sorted from 0ns to 10ns
+    # print(sorted_folders)
+    # print(sorted_folders[1].name[:-2])
+    filtered_paths = [path for path in sorted_folders if float(path.name.replace('ns', '')) * 10 % 1 == 0]
+    
+    rows = []
 
-    for idx, dir_path in enumerate(sorted_folders): #dir_path = 0ns, 0.1ns, 0.2ns folder etc.
+    for idx, dir_path in enumerate(filtered_paths):  # dir_path = 0ns, 0.1ns, 0.2ns folder etc.
         print(dir_path.name)
         
         if os.path.isdir(dir_path):
-            # List all files in the directory so 001.pdb, 002.pdb etc.
-            files = os.listdir(dir_path)
-            # Filter for PDB files
-            pdb_files = [file for file in files if file.endswith('.pdb')]
-            
-            #create WHIM/GETAWAY vector for every molecule
-            for idx, pdb_file in enumerate(pdb_files):
+            # List all PDB files in the directory
+            pdb_files = [file for file in os.listdir(dir_path) if file.endswith('.pdb')]
+            filtered_sorted_list = sorted([file for file in pdb_files if int(file.split('_')[0]) <= 856], 
+                              key=lambda x: int(x.split('_')[0]))
+            # print(filtered_sorted_list)
+            for pdb_file in filtered_sorted_list:
                 pdb_file_path = os.path.join(dir_path, pdb_file)
-                
                 mol = Chem.MolFromPDBFile(pdb_file_path, removeHs=False, sanitize=False)
                 
                 if mol is not None:
-                    # Sanitize the molecule
                     try:
                         Chem.SanitizeMol(mol)
-                        #print("Molecule sanitized successfully.")
                     except ValueError as e:
                         print(f"Sanitization error: {e}")
+                        continue
                 else:
-                    print("not done molecule:")
+                    print("Invalid molecule:")
+                    print(pdb_file)
+                    continue
                 
+                # Calculate descriptors
                 if descriptors == 'WHIM':
-                    mol_descriptors = rdMolDescriptors.CalcWHIM(mol) #creates vector of the WHIM descriptors
+                    mol_descriptors = rdMolDescriptors.CalcWHIM(mol)
                 elif descriptors == 'GETAWAY':
                     mol_descriptors = rdMolDescriptors.CalcGETAWAY(mol)
-                else:
-                    print(f"Error: Choose a valid descriptor")
                 
-                #why 3? because '001.pdb' is the index, this takes '001' --> then int() gives 1
-                index_to_insert = int(pdb_file[:3])+int((float(dir_path.name.rstrip('ns'))/10)*(len(sorted_folders)-1)*len(all_molecules_list))
-                
+                # index_to_insert = int(pdb_file[:3]) + int((float(dir_path.name.rstrip('ns')) / 10) * (len(sorted_folders) - 1) * len(all_molecules_list))
                 pki_value = molID_PKI_df.loc[molID_PKI_df['mol_id'] == int(pdb_file[:3]), 'PKI'].values[0]
                 conformation_value = float(dir_path.name.rstrip('ns'))
                 if conformation_value.is_integer():
                     conformation_value = int(conformation_value)
-                total_df_conf_order.iloc[index_to_insert-1] = [int(pdb_file[:3]),pki_value,conformation_value] + mol_descriptors #why -1? to convert 001 to index 0 for example and list start at index 0.
+                
+                # Collect the row data
+                rows.append([int(pdb_file[:3]), pki_value, conformation_value] + mol_descriptors)
         else:
             print('not a path')
-    total_df_conf_order = total_df_conf_order.dropna().reset_index(drop=True)
+
+    # Convert rows list to DataFrame
+    columns = ['mol_id', 'PKI', 'conformations (ns)'] + list(range(num_columns))
+    total_df_conf_order = pd.DataFrame(rows, columns=columns).dropna().reset_index(drop=True)
+
     return total_df_conf_order
 
 def get_sorted_folders(base_path):
@@ -175,7 +176,7 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
     #only contains molID and PKI value
     #NOTE: is it necessary to get the targets already?
     df_targets = get_targets(dataset_path) #df with mol_id and its PKI value
-
+    
     #count how many directories there are in ligand_conformations_JAK1 (so how many time steps + rdkit one)
     x_ns_dirs = count_ns_dirs(ligand_conformations_path) #NOTE: not necessary??
 

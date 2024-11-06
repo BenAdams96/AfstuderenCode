@@ -131,14 +131,16 @@ def plot_boxplots_compare_ns(data_for_plot, sorted_subfolders,ordered_row_names,
         "descriptors only": 'lightblue',
         "reduced_t0.85": 'lightgreen',
         "reduced_t0.85_MD": 'lightcoral',
-        "MD only": 'lightgray'  # New color for "MD only"
+        "MD only": 'lightgray',  # New color for "MD only"
+        "custom_dataframes": 'mediumorchid'
     }
 
     labels = {
         "descriptors only": 'Descriptors Only',
         "reduced_t0.85": 'Reduced t0.85',
         "reduced_t0.85_MD": 'Reduced t0.85 MD',
-        "MD only": 'MD Only'  # Added label for "MD only"
+        "MD only": 'MD Only',  # Added label for "MD only"
+        "custom_dataframes": 'x features'
     }
     
     colors = {key: colors[key] for key in sorted_subfolders if key in colors}
@@ -269,14 +271,22 @@ def boxplots_compare_individuals(master_folder, csv_filename, modelresults_dict)
         public_variables.dfs_descriptors_only_path_.name: 'lightblue',
         public_variables.dfs_reduced_path_.name: 'lightgreen',
         public_variables.dfs_reduced_and_MD_path_.name: 'lightcoral',
-        public_variables.dfs_MD_only_path_.name: 'lightgray'  # New color for "MD only"
+        public_variables.dfs_MD_only_path_.name: 'lightgray',  # New color for "MD only"
+        'descriptors only scaled mw': 'salmon',
+        "reduced_t0.9": 'teal',
+        "reduced_t0.75": 'goldenrod',
+        "custom_dataframes": 'mediumorchid'
     }
 
     labels = {
-        public_variables.dfs_descriptors_only_path_.name: 'Descriptors Only',
-        public_variables.dfs_reduced_path_.name: 'Reduced features ct 0.85',
-        public_variables.dfs_reduced_and_MD_path_.name: 'Reduced features + MD features',
-        public_variables.dfs_MD_only_path_.name: 'MD features only'  # Added label for "MD only"
+        public_variables.dfs_descriptors_only_path_.name: 'All RDkit 3D features',
+        public_variables.dfs_reduced_path_.name: f'Reduced RDkit 3D features',
+        public_variables.dfs_reduced_and_MD_path_.name: 'Reduced RDkit 3D features + MD features',
+        public_variables.dfs_MD_only_path_.name: 'MD features only',  # Added label for "MD only"
+        'descriptors only scaled mw': 'salmon',
+        "reduced_t0.9": 'teal',
+        "reduced_t0.75": 'goldenrod',
+        "custom_dataframes": 'x features'
     }
 
     filtered_colors = {key: colors[key] for key in modelresults_dict.keys() if key in colors}
@@ -377,7 +387,7 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     """
     """
     plt.figure()
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(10, 6))
     # Create a folder to save plots if it doesn't exist
     save_plot_folder = master_folder / Path('boxplots_compare_groups')
     save_plot_folder.mkdir(parents=True, exist_ok=True)
@@ -387,24 +397,32 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
         public_variables.dfs_descriptors_only_path_.name: 'lightblue',
         public_variables.dfs_reduced_path_.name: 'lightgreen',
         public_variables.dfs_reduced_and_MD_path_.name: 'lightcoral',
-        public_variables.dfs_MD_only_path_.name: 'lightgray'  # New color for "MD only"
+        public_variables.dfs_MD_only_path_.name: 'lightgray',  # New color for "MD only"
+        'descriptors only scaled mw': 'salmon',
+        "reduced_t0.9": 'teal',
+        "reduced_t0.75": 'goldenrod',
+        "custom_dataframes": 'mediumorchid'
     }
 
     labels = {
-        public_variables.dfs_descriptors_only_path_.name: 'RDKIT Descriptors Only',
-        public_variables.dfs_reduced_path_.name: f'Reduced features (corr_threshold={public_variables.correlation_threshold_})',
-        public_variables.dfs_reduced_and_MD_path_.name: 'Reduced features + MD features',
-        public_variables.dfs_MD_only_path_.name: 'MD features only'  # Added label for "MD only"
+        public_variables.dfs_descriptors_only_path_.name: 'All RDkit 3D features',
+        public_variables.dfs_reduced_path_.name: f'Reduced RDkit 3D features',
+        public_variables.dfs_reduced_and_MD_path_.name: 'Reduced RDkit 3D features + MD features',
+        public_variables.dfs_MD_only_path_.name: 'MD features only',  # Added label for "MD only"
+        'descriptors only scaled mw': 'salmon',
+        "reduced_t0.9": 'teal',
+        "reduced_t0.75": 'goldenrod',
+        "custom_dataframes": 'x features'
     }
 
     filtered_colors = {key: colors[key] for key in modelresults_dict.keys() if key in colors}
     filtered_labels = {key: labels[key] for key in modelresults_dict.keys() if key in labels}
     
     # Define parameters
-    box_width = 1
-    group_gap = 0.2
-    group_spacing = 1  # Increased spacing to separate different subgroups clearly
-    border = 1
+    box_width = 3
+    group_gap = 1
+    group_spacing = 5  # Increased spacing to separate different subgroups clearly
+    border = 2
 
     # Get the group with the most values directly
     group_with_most_values = max(modelresults_dict, key=lambda k: len(modelresults_dict[k]))
@@ -491,14 +509,14 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     handles = [plt.Line2D([0], [0], color=color, lw=4) for color in filtered_colors.values()]
     plt.legend(handles=handles, labels=filtered_labels.values(), loc='best')
 
-    plt.title(f"Boxplots for (Kfold=10 ; R-squared)")
-    plt.xlabel("Subgroups")
-    plt.ylabel("Scores")
+    plt.title(f"{public_variables.model_} Boxplot results for Kfold=10 using {public_variables.RDKIT_descriptors_} 3D descriptors") #
+    plt.xlabel("conformations group")
+    plt.ylabel("R²-score")
     
     # Adjust x-axis limits
     plt.xlim(-(box_width/2) - border, positions[-1] + (box_width/2) + border)
     # Set y-axis limits between 0.4 and 0.9
-    plt.ylim(0.3, 0.9)
+    plt.ylim(0.0, 0.5)
     # Set xticks and labels
     xtick_labels = [subgroup for group in modelresults_dict.values() for subgroup in group.keys()]
 
@@ -523,6 +541,7 @@ def main(dfs_paths = [public_variables.dfs_descriptors_only_path_]):
         # Check if the entry is a tuple (path, list) or just a path
         if isinstance(dfs_entry, tuple):
             dfs_path, idlist_to_exclude = dfs_entry  # Unpack the tuple
+            print(dfs_path)
             print(f"Processing path {dfs_path.name} with CSV list to exclude: {idlist_to_exclude}")
         else:
             dfs_path = dfs_entry  # Only a path is given, no CSV list
@@ -541,9 +560,27 @@ def main(dfs_paths = [public_variables.dfs_descriptors_only_path_]):
 
 if __name__ == "__main__":
     dfs_paths = []
-    dfs_paths.append((public_variables.dfs_descriptors_only_path_, ['rdkit_min','0ns'])) #['concat_hor','concat_ver']
-    dfs_paths.append((public_variables.dfs_reduced_path_, ['rdkit_min','0ns'])) #['rdkit_min','0ns']
-    dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, ['rdkit_min','0ns']))
-    dfs_paths.append((public_variables.dfs_MD_only_path_, ['rdkit_min','0ns']))
+    # dpath = public_variables.base_path_ / Path('dataframes_JAK1_GETAWAY') 
+    # ddpath = dpath / Path('descriptors only')
+    # drpath = dpath / Path('reduced_t0.65')
+    # drmpath = dpath / Path('reduced_t0.65_MD')
+    # dmpath = dpath / Path('MD only')
+    # dfs_paths.append((ddpath, ['2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_50','conformations_100']))
+    # dfs_paths.append((drpath, ['2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_50','conformations_100']))
+    # dfs_paths.append((drmpath, ['minimized','conformations_10','conformations_20','conformations_50','conformations_100']))
+    # dfs_paths.append((dmpath, ['minimized','conformations_10','conformations_20','conformations_50','conformations_100']))
+
+    dfs_paths.append((public_variables.dfs_descriptors_only_path_, ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_50','conformations_100']
+    dfs_paths.append((public_variables.dfs_reduced_path_, ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['rdkit_min','0ns'] ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns']
+    dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, ['minimized']))
+    dfs_paths.append((public_variables.dfs_MD_only_path_, ['minimized']))
+
+
+
+
+    # dfs_paths.append((public_variables.dataframes_master_ / 'custom_dataframes',['rdkit_min','0ns']))
+    # dfs_paths.append((public_variables.dataframes_master_ / 'reduced_t0.75',['rdkit_min','0ns']))
+    # dfs_paths.append((public_variables.dataframes_master_ / 'descriptors only scaled mw',['rdkit_min','0ns']))
+    
     print(dfs_paths)
     main(dfs_paths)

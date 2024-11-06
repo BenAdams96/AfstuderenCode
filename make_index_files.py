@@ -879,7 +879,7 @@ def main():
     #calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
 
     #use this for 
-    calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
+    # calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
 
     outputdir = public_variables.energyfolder_path_ / 'SASA'
     # run_gmx_sasa(MDsimulations_path, outputdir) #NOTE: done
@@ -891,8 +891,8 @@ def main():
 
     #NOTE: gyration
     outputdir_gyration = public_variables.energyfolder_path_ / 'Gyration'
-    # run_gmx_gyrate(MD_path=MDsimulations_path, output_path=outputdir_gyration)
-    # gyration_xvg_files_to_csvfiles(energyfolder_path, outputdir_gyration)
+    run_gmx_gyrate(MD_path=MDsimulations_path, output_path=outputdir_gyration)
+    gyration_xvg_files_to_csvfiles(energyfolder_path, outputdir_gyration)
 
     #NOTE: epsilon and total dipole moment
     # outputdir_TDM = public_variables.energyfolder_path_ / 'Total_dipoleMoment'

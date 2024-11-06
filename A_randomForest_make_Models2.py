@@ -194,7 +194,7 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
     #l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
     l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
 
-    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
+    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv','conformations_500.csv','conformations_200.csv','conformations_100.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
     print(dfs_in_dic.keys())
     #remove the mol_id and PKI #NOTE: empty rows have already been removed beforehand, but still do it just to be sure!
     columns_to_drop = ['mol_id', 'PKI', "conformations (ns)"]
@@ -249,8 +249,16 @@ if __name__ == "__main__":
     # print(dic.keys())
     # Kfold_Cross_Validation_incl_grouped(dic,targets, public_variables.hyperparameter_grid_, 5, 'neg_root_mean_squared_error')
     # main()
-    # main(public_variables.dfs_descriptors_only_path_)
-    # main(public_variables.dfs_reduced_path_)
+
+
+
+    main(public_variables.dfs_descriptors_only_path_)
+    main(public_variables.dfs_reduced_path_)
+
+
     main(public_variables.dfs_reduced_and_MD_path_)
     main(public_variables.dfs_MD_only_path_)
+
+    # main(public_variables.dataframes_master_/'reduced_t0.85')
+    # main(public_variables.dataframes_master_/'descriptors only scaled mw')
 

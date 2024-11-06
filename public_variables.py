@@ -7,14 +7,14 @@ print('base path')
 print(base_path_)
 #dataset related variable names
 model_ = 'RF'
-RDKIT_descriptors_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
-dataset_protein_ = 'GSK3'   #VARIABLE
+RDKIT_descriptors_ = 'GETAWAY' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
+dataset_protein_ = 'GSK3'   #VARIABLE 'JAK1' or 'GSK3'
 dataset_name_ = dataset_protein_ + '_dataset.csv' #NOTE: remove later
 dataset_csvfile_ = dataset_protein_ + '_dataset.csv'
 dataset_csvfile_path_ = base_path_ / dataset_csvfile_
 
 timeinterval_snapshots = 1 #in ns #VARIABLE (smallest value possible =  0.01 ns which is equal to 10ps)
-correlation_threshold_ = 0.85
+correlation_threshold_ = 0.65
 
 #MD simulations folder file
 MDsimulations_folder_ = f'MDsimulations_{dataset_protein_}'
@@ -35,7 +35,7 @@ dfs_descriptors_only_path_ =  dataframes_master_ / 'descriptors only'
 dfs_reduced_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}'
 dfs_reduced_and_MD_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}_MD'
 dfs_MD_only_path_ = dataframes_master_ / 'MD only'
-Modelresults_folder_ = f'ModelResults_' #not a path because can be in different paths
+Modelresults_folder_ = f'ModelResults_{model_}' #not a path because can be in different paths
 Modelresults_combined_folder_ = f'ModelResults_combined_{model_}'
 
 # dataframes_folder_red_ = f'dataframes_{dataset_protein_}_{descriptors_}_i{timeinterval_snapshots}_t{correlation_threshold_}'
@@ -101,6 +101,13 @@ parameter_grid_ = {
     #         'scoring_': [('neg_root_mean_squared_error','RMSE'),('r2','R-squared (R²)')],
     #         }
 
+# hyperparameter_grid_ = {
+#             'n_estimators': [150],
+#             'max_depth': [8,15],
+#             'min_samples_split': [10,20],
+#             'min_samples_leaf': [5],
+#             'max_features': ['sqrt'] #'None' can lead to overfitting.
+#         }
 hyperparameter_grid_ = {
             'n_estimators': [100],
             'max_depth': [10],
@@ -108,6 +115,13 @@ hyperparameter_grid_ = {
             'min_samples_leaf': [5],
             'max_features': ['sqrt'] #'None' can lead to overfitting.
         }
+# hyperparameter_grid_ = {
+#             'n_estimators': [100],
+#             'max_depth': [10],
+#             'min_samples_split': [10],
+#             'min_samples_leaf': [5],
+#             'max_features': ['sqrt'] #'None' can lead to overfitting.
+#         }
 
 # hyperparameter_grid_ = {
 #             'n_estimators': [100,150,300],
@@ -118,8 +132,8 @@ hyperparameter_grid_ = {
 #         }
 
 hyperparameter_grid_XGboost = {
-    'n_estimators': [100,300],          # Number of trees (lower values for quicker training)
-    'max_depth': [5],             # Maximum depth of each tree (shallower trees to avoid overfitting)
+    'n_estimators': [100],          # Number of trees (lower values for quicker training)
+    'max_depth': [8],            # Maximum depth of each tree (shallower trees to avoid overfitting)
     'learning_rate': [0.1],       # Learning rate (smaller values for more gradual training)
     'subsample': [0.7],            # Subsample ratio of the training instance (to prevent overfitting)
     'colsample_bytree': [0.7],     # Subsample ratio of columns when constructing each tree

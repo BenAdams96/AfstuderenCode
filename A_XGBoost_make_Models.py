@@ -189,14 +189,14 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
     descriptors = public_variables.RDKIT_descriptors_            ## why, just did this but cant remember. for name
     print(dfs_path)
     #create folder for storing the models and results from them
-    Modelresults_path = dfs_path / f'{public_variables.Modelresults_folder_}_XGB'
+    Modelresults_path = dfs_path / f'{public_variables.Modelresults_folder_}'
     Modelresults_path.mkdir(parents=True, exist_ok=True)
 
 
     #l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
     l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
 
-    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
+    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv','conformations_100.csv','conformations_200.csv','conformations_500.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
     print(dfs_in_dic.keys())
     #remove the mol_id and PKI #NOTE: empty rows have already been removed beforehand, but still do it just to be sure!
     columns_to_drop = ['mol_id', 'PKI', "conformations (ns)"]
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     # Kfold_Cross_Validation_incl_grouped(dic,targets, public_variables.hyperparameter_grid_, 5, 'neg_root_mean_squared_error')
     # main()
     main(public_variables.dfs_descriptors_only_path_)
-    # main(public_variables.dfs_reduced_path_)
-    # main(public_variables.dfs_reduced_and_MD_path_)
-    # main(public_variables.dfs_MD_only_path_)
+    main(public_variables.dfs_reduced_path_)
+    main(public_variables.dfs_reduced_and_MD_path_)
+    main(public_variables.dfs_MD_only_path_)
 

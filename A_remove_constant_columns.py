@@ -15,6 +15,17 @@ from pathlib import Path
 import re
 import pathlib
 
+def remove_constant_columns(df):
+    # Identify constant columns
+    constant_columns = df.columns[df.nunique() <= 1]
+    
+    if not constant_columns.empty:
+        print(f"The following constant columns were removed: {', '.join(constant_columns)}")
+    
+    # Remove constant columns and keep only non-constant columns
+    non_constant_columns = df.loc[:, df.nunique() > 1]
+    return non_constant_columns
+
 def save_dataframes(dic_with_dfs, save_path = public_variables.dfs_descriptors_only_path_):
     save_path.mkdir(parents=True, exist_ok=True)
     timeinterval = public_variables.timeinterval_snapshots
@@ -46,9 +57,10 @@ def create_dfs_dic(totaldf, timeinterval = public_variables.timeinterval_snapsho
 
 def main():
     totaldf = pd.read_csv(public_variables.dataframes_master_ / 'conformations_1000.csv')
-
-    dfs_in_dict = create_dfs_dic(totaldf, timeinterval = 1)
-    save_dataframes(dfs_in_dict,public_variables.dfs_descriptors_only_path_)
+    totaldf_no_constants = remove_constant_columns(totaldf)
+    totaldf_no_constants.to_csv(public_variables.dataframes_master_ / 'conformations_1000.csv', index=False)
+    # dfs_in_dict = create_dfs_dic(totaldf, timeinterval = 1)
+    # save_dataframes(dfs_in_dict,public_variables.dfs_descriptors_only_path_)
     
     return
 
