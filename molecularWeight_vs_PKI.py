@@ -105,7 +105,6 @@ df = pd.read_csv(csv_file_path)
 molid_pki_tuples = list(zip(df['mol_id'], df['PKI']))
 # print(molid_pki_tuples)
 
-
 folder_path = public_variables.base_path_ / 'pdb_GSK3'
 molecular_weights = calculate_molecular_weights(folder_path)
 

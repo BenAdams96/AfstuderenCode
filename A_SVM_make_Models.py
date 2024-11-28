@@ -5,8 +5,9 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 import randomForest_read_in_models
 import csv_to_dataframes
-import randomForest_Class
-from randomForest_Class import RandomForestModel
+import A_SVM_class
+from A_SVM_class import SupportVectorMachineRegressor
+from sklearn.svm import SVR
 import public_variables
 
 from sklearn.preprocessing import StandardScaler
@@ -25,6 +26,35 @@ import pandas as pd
 import math
 import re
 import os
+
+def standardize_dataframes(df_dict):
+    """
+    Standardizes all DataFrames in a dictionary.
+    
+    Parameters:
+        df_dict (dict): A dictionary where keys are strings and values are pandas DataFrames.
+    
+    Returns:
+        dict: A dictionary with the same keys, but the DataFrames are standardized.
+    """
+    standardized_dict = {}
+    scaler = StandardScaler()
+    
+    for key, df in df_dict.items():
+        # Select only numeric columns for standardization
+        numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+        
+        # Apply standardization to numeric columns
+        scaled_values = scaler.fit_transform(df[numeric_cols])
+        
+        # Create a copy of the original DataFrame with standardized numeric columns
+        standardized_df = df.copy()
+        standardized_df[numeric_cols] = scaled_values
+        
+        # Add the standardized DataFrame to the new dictionary
+        standardized_dict[key] = standardized_df
+    
+    return standardized_dict
 
 def Kfold_Cross_Validation_incl_grouped(dfs_in_dic, hyperparameter_grid, kfold_, scoring_):
     print("kfold new + grouped")
@@ -62,31 +92,33 @@ def Kfold_Cross_Validation_incl_grouped(dfs_in_dic, hyperparameter_grid, kfold_,
         # print(custom_splits[1][1][0:40])
         # print(targets[0:40])
         # Initial model and grid search outside the loop
-        rf_model = RandomForestModel(n_trees=100, max_depth=10, min_samples_split=5, max_features='sqrt')
-        rf_model.model.random_state = 42
-        df = df.drop(columns=['mol_id','PKI','conformations (ns)'], axis=1, errors='ignore')
+        # Initialize SVM model
         
-        #NOTE: careful: conformations (ns) is still in it
-        grid_search = rf_model.hyperparameter_tuning(df,targets,hyperparameter_grid,cv=custom_splits,scoring_=scoring_)
+        svm_model = SupportVectorMachineRegressor(C=1.0, kernel='rbf')  # Default values, customize as needed
+
+        # Drop columns not used in features
+        df_features = df.drop(columns=['mol_id', 'PKI', 'conformations (ns)'], axis=1, errors='ignore')
+
+        # Perform grid search with the SVM model
+        grid_search = svm_model.hyperparameter_tuning(df_features, targets, hyperparameter_grid, cv=custom_splits, scoring_=scoring_)
+
+        # Collect results
+        df_results = pd.DataFrame(grid_search.cv_results_)
+        result = df_results.loc[grid_search.best_index_, columns_[1:]]
         
-        df_results = pd.DataFrame(grid_search.cv_results_) #what results? of cv. so the 10 results and 8 rows (each row was a set of hyperparameters)
-        
-        #grid_search.best_index_ = the index that is best of the x amount of hyperparameter combinations
-        result = df_results.loc[grid_search.best_index_, columns_[1:]] #1: because we dont want to include 'time'
-        #df_results = dataframe with 'hyperparametercombinations' amount of rows, and each row has mean_test_score and split_test_scores etc
-        #result = of the best combination of hyperparameters. mean_test_score, std, params, split 0 to 4
-        #make it so that the scores are always positive
-        result["mean_test_score"] = abs(result['mean_test_score']) 
+        # Make scores positive
+        result["mean_test_score"] = abs(result['mean_test_score'])
         for i in range(kfold_):
             result[f'split{i}_test_score'] = abs(result[f'split{i}_test_score'])
 
         result_df_row = result.to_frame().T
-        result_df_row['mol_id'] = name #add a column of the '1ns' etc
-        result_df_row = result_df_row[columns_] #change the order to the one specified above
+        result_df_row['mol_id'] = name
+        result_df_row = result_df_row[columns_]
 
-        #make 1 big dataframe for all the '0ns' '1ns' 'rdkit_min' etc
+        # Concatenate results for all mol_id categories
         ModelResults_ = pd.concat([ModelResults_, result_df_row], ignore_index=True)
-        models[name] = rf_model
+        models[name] = svm_model
+
     return models, ModelResults_
 
 def strip_dataframes(dataframes,feature_index_list_of_lists):
@@ -187,14 +219,14 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
     descriptors = public_variables.RDKIT_descriptors_            ## why, just did this but cant remember. for name
 
     #create folder for storing the models and results from them
-    Modelresults_path = dfs_path / public_variables.Modelresults_folder_
+    Modelresults_path = dfs_path / 'ModelResults_SVM'
     Modelresults_path.mkdir(parents=True, exist_ok=True)
 
 
     #l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
     l = ['0ns', '1ns', '2ns', '3ns', '4ns', '5ns', '6ns', '7ns', '8ns', '9ns', '10ns','conformations_10','conformations_20','conformations_100','conformations_200','conformations_500','conformations_1000']
 
-    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv','conformations_500.csv','conformations_200.csv','conformations_100.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
+    dfs_in_dic = csv_to_dictionary.csvfiles_to_dic(dfs_path, exclude_files=['concat_hor.csv','concat_ver.csv','conformations_1000_molid.csv','conformations_1000.csv','MD_output.csv','conformations_500.csv','conformations_200.csv','conformations_100.csv','conformations_50.csv','conformations_20.csv']) #get all the created csvfiles from e.g. 'dataframes_JAK1_WHIM' into a dictionary
     print(dfs_in_dic.keys())
     #remove the mol_id and PKI #NOTE: empty rows have already been removed beforehand, but still do it just to be sure!
     columns_to_drop = ['mol_id', 'PKI', "conformations (ns)"]
@@ -202,10 +234,10 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
     #order the keys in the dictionary
     sorted_keys_list = csv_to_dictionary.get_sorted_columns(list(dfs_in_dic.keys())) #RDKIT first
     dfs_in_dic = {key: dfs_in_dic[key] for key in sorted_keys_list if key in dfs_in_dic} #order
-    print(sorted_keys_list)
+    dfs_in_dic_standardized = standardize_dataframes(dfs_in_dic)
     
     parameter_grid = public_variables.parameter_grid_ #kfolds (5, 10) and metrics (rmse, r2)
-    hyperparameter_grid = public_variables.hyperparameter_grid_ #n_estimators, max_depth etc.
+    hyperparameter_grid = public_variables.hyperparameter_grid_SVM #n_estimators, max_depth etc.
 
     param_combinations = list(itertools.product(parameter_grid['kfold_'], parameter_grid['scoring_']))
     print(param_combinations)
@@ -213,7 +245,7 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
 
     for kfold_value, scoring_value in param_combinations:
         print(f"kfold_: {kfold_value}, scoring_: {scoring_value[0]}")
-        models_dic, Modelresults_ = Kfold_Cross_Validation_incl_grouped(dfs_in_dic, hyperparameter_grid, kfold_=kfold_value, scoring_=scoring_value[0])
+        models_dic, Modelresults_ = Kfold_Cross_Validation_incl_grouped(dfs_in_dic_standardized, hyperparameter_grid, kfold_=kfold_value, scoring_=scoring_value[0])
         print('done with Kfold cross validation')
         csv_filename = f'results_K{kfold_value}_{scoring_value[1]}_{descriptors}.csv'
         Modelresults_.to_csv(Modelresults_path / csv_filename, index=False)
@@ -250,14 +282,10 @@ if __name__ == "__main__":
     # Kfold_Cross_Validation_incl_grouped(dic,targets, public_variables.hyperparameter_grid_, 5, 'neg_root_mean_squared_error')
     # main()
 
-
-
     main(public_variables.dfs_descriptors_only_path_)
     main(public_variables.dfs_reduced_path_)
-
-
-    main(public_variables.dfs_reduced_and_MD_path_)
-    main(public_variables.dfs_MD_only_path_)
+    # main(public_variables.dfs_reduced_and_MD_path_)
+    # main(public_variables.dfs_MD_only_path_)
 
     # main(public_variables.dataframes_master_/'reduced_t0.85')
     # main(public_variables.dataframes_master_/'descriptors only scaled mw')

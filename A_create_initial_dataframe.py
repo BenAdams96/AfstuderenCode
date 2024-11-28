@@ -1,19 +1,19 @@
-import math
-import numpy as np
+# Standard library imports
 import os
-import MDAnalysis as mda
-from MDAnalysis.coordinates import PDB
-import rdkit
-import public_variables
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Descriptors3D
-from rdkit.Chem import rdMolDescriptors
-import trj_to_pdbfiles
-import pandas as pd
-from pathlib import Path
 import re
-import pathlib
+
+# Third-party libraries
+import numpy as np
+import pandas as pd
+
+# RDKit imports
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+
+# Project-specific imports
+import public_variables
+import trj_to_pdbfiles
+
 
 def get_targets(dataset):
     """read out the original dataset csv file and get the targets + convert exp_mean to PKI
@@ -22,27 +22,6 @@ def get_targets(dataset):
     df = pd.read_csv(dataset)
     df['PKI'] = -np.log10(df['exp_mean [nM]'] * 1e-9)
     return df[['mol_id','PKI']]
-
-def count_ns_dirs(ligandconformations_path):
-    '''count how many directories there are in ligand_conformations_for_every_ns (so how many time steps)
-        in: ligandconformations_path
-        out: how many directories there are (for example 11 nanosecond snapshots)
-    '''
-    try:
-        # List all entries in the directory
-        entries = os.listdir(ligandconformations_path)
-        # Count only directories
-        count = sum(1 for entry in entries if os.path.isdir(os.path.join(ligandconformations_path, entry)))
-        return count
-    except FileNotFoundError:
-        print(f"Error: The directory '{ligandconformations_path}' does not exist.")
-        return 0
-    except PermissionError:
-        print(f"Error: Permission denied to access '{ligandconformations_path}'.")
-        return 0
-    except Exception as e:
-        print(f"Error: {e}")
-        return 0
     
 def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_molecules_list):
     ''' Create the WHIM dataframes for every molecule for every timestep (xdirs)
@@ -56,10 +35,13 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
     else:
         raise ValueError("Error: Choose a valid descriptor")
     
+    if public_variables.dataset_protein_ == 'JAK1':
+        max_molecule_number = 615
+    elif public_variables.dataset_protein_ == 'GSK3':
+        max_molecule_number = 856
+    
     sorted_folders = get_sorted_folders(ligand_conformations_path)  # Sorted from 0ns to 10ns
-    # print(sorted_folders)
-    # print(sorted_folders[1].name[:-2])
-    filtered_paths = [path for path in sorted_folders if float(path.name.replace('ns', '')) * 10 % 1 == 0]
+    filtered_paths = [path for path in sorted_folders if float(path.name.replace('ns', '')) * 10 % 1 == 0] #only use stepsize of 0.1 instead of 0.01
     
     rows = []
 
@@ -69,7 +51,7 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
         if os.path.isdir(dir_path):
             # List all PDB files in the directory
             pdb_files = [file for file in os.listdir(dir_path) if file.endswith('.pdb')]
-            filtered_sorted_list = sorted([file for file in pdb_files if int(file.split('_')[0]) <= 856], 
+            filtered_sorted_list = sorted([file for file in pdb_files if int(file.split('_')[0]) <= max_molecule_number], #TODO: shitty solution
                               key=lambda x: int(x.split('_')[0]))
             # print(filtered_sorted_list)
             for pdb_file in filtered_sorted_list:
@@ -161,11 +143,6 @@ def save_dataframes(dic_with_dfs,base_path):
     for name, df in dic_with_dfs.items():
         #print(f"name: {name}, i: {df.head(1)}")
         df.to_csv(final_path / f'{name}.csv', index=False)
-    # for i, x in enumerate(np.arange(0, len(dfs) * timeinterval, timeinterval)):
-    #     if x.is_integer():
-    #         x = int(x)
-    #     print(f"x: {x}, i: {i}")
-    #     dfs[i].to_csv(final_path / f'{x}ns.csv', index=False)
 
 #NOTE: this file does: get targets, count how many valid molecules and which,it creates the folder 'dataframes_WHIMJAK1' or equivellant
 def main(ligand_conformations_path=public_variables.ligand_conformations_path_, \
@@ -175,28 +152,21 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
 
     #only contains molID and PKI value
     #NOTE: is it necessary to get the targets already?
-    df_targets = get_targets(dataset_path) #df with mol_id and its PKI value
-    
-    #count how many directories there are in ligand_conformations_JAK1 (so how many time steps + rdkit one)
-    x_ns_dirs = count_ns_dirs(ligand_conformations_path) #NOTE: not necessary??
+    df_targets = get_targets(dataset_path) #df with columns: 'mol_id' and 'PKI value'. all molecules
 
     # #check how many invalids there are which we need to remove from the dataframes
     all_molecules_list, valid_mols, invalid_mols = trj_to_pdbfiles.get_molecules_lists(MDsimulations_path)
     print(all_molecules_list)
     #create the dataframes, which eventually will be placed in 'dataframes_JAK1_WHIM' and also add the targets to the dataframes.
-    df_sorted_by_conf = create_full_dfs(ligand_conformations_path, df_targets, descriptors, all_molecules_list)
-    df_sorted_by_molid = df_sorted_by_conf.sort_values(by=['mol_id', 'conformations (ns)']).reset_index(drop=True)
+    df_sorted_by_configuration = create_full_dfs(ligand_conformations_path, df_targets, descriptors, all_molecules_list)
+    df_sorted_by_molid = df_sorted_by_configuration.sort_values(by=['mol_id', 'conformations (ns)']).reset_index(drop=True)
+
     public_variables.dataframes_master_.mkdir(parents=True, exist_ok=True)
-    df_sorted_by_conf.to_csv(public_variables.dataframes_master_ / 'conformations_1000.csv', index=False)
-    df_sorted_by_molid.to_csv(public_variables.dataframes_master_ / 'conformations_1000_moldid.csv', index=False)
-    
-    # # remove invalids
-    # dic_with_dfs = remove_invalids_from_dfs(dfs_WHIM,invalid_mols)
-    # save_dataframes(dic_with_dfs,public_variables.base_path_)
+    df_sorted_by_configuration.to_csv(public_variables.initial_dataframe, index=False)
+    df_sorted_by_molid.to_csv(public_variables.dataframes_master_ / 'initial_dataframe_mol_id.csv', index=False)
     return
 
 if __name__ == "__main__":
-    #x = prod_to_pdbfiles.main()
 
     ligand_conformations_path = public_variables.ligand_conformations_path_ # 'ligand_conformations_JAK1'
     dataset_csvfile_path = public_variables.dataset_csvfile_path_ # 'JAK1dataset.csv'
@@ -204,18 +174,4 @@ if __name__ == "__main__":
     RDKIT_descriptors = public_variables.RDKIT_descriptors_
 
     main(ligand_conformations_path, dataset_csvfile_path, MDsimulations_path, RDKIT_descriptors)
-
-
-# print("hello world")
-# print(rdkit.__version__)
-# pdb_file = '100.pdb'
-# mol = Chem.MolFromPDBFile(pdb_file, removeHs=False)
-
-# if mol is None:
-#     print("Failed to read PDB file")
-# else:
-#     whim_descriptors = rdMolDescriptors.CalcWHIM(mol)
-#     print(len(whim_descriptors))
-#     #for i, value in enumerate(whim_descriptors):
-#     #    print(f"WHIM Descriptor {i+1}: {value}")
 

@@ -7,14 +7,14 @@ print('base path')
 print(base_path_)
 #dataset related variable names
 model_ = 'RF'
-RDKIT_descriptors_ = 'GETAWAY' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
-dataset_protein_ = 'GSK3'   #VARIABLE 'JAK1' or 'GSK3'
+RDKIT_descriptors_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
+dataset_protein_ = 'JAK1'   #VARIABLE 'JAK1' or 'GSK3'
 dataset_name_ = dataset_protein_ + '_dataset.csv' #NOTE: remove later
 dataset_csvfile_ = dataset_protein_ + '_dataset.csv'
 dataset_csvfile_path_ = base_path_ / dataset_csvfile_
 
 timeinterval_snapshots = 1 #in ns #VARIABLE (smallest value possible =  0.01 ns which is equal to 10ps)
-correlation_threshold_ = 0.65
+correlation_threshold_ = 0.85
 
 #MD simulations folder file
 MDsimulations_folder_ = f'MDsimulations_{dataset_protein_}'
@@ -31,8 +31,10 @@ ligand_conformations_folder_ = f'ligand_conformations_{dataset_protein_}'
 ligand_conformations_path_ = base_path_ / ligand_conformations_folder_
 
 dataframes_master_ = base_path_ / Path(f'dataframes_{dataset_protein_}_{RDKIT_descriptors_}')
+initial_dataframe = base_path_ / Path('initial_dataframe.csv')
 dfs_descriptors_only_path_ =  dataframes_master_ / 'descriptors only'
 dfs_reduced_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}'
+dfs_PCA_path =  dataframes_master_ / 'PCA'
 dfs_reduced_and_MD_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}_MD'
 dfs_MD_only_path_ = dataframes_master_ / 'MD only'
 Modelresults_folder_ = f'ModelResults_{model_}' #not a path because can be in different paths
@@ -79,8 +81,6 @@ features = ["Bond","U-B","Proper-Dih."]
 #     'T-Other', 'T-SOL']
 
 
-
-
 # dataframes_folder = 'dataframesWHIMJAK1'
 # dataframes_folder_red = 'dataframesWHIMJAK1_reduced'
 # dataframes_folder_red_MD = 'dataframesWHIMJAK1_red_MD'
@@ -101,14 +101,14 @@ parameter_grid_ = {
     #         'scoring_': [('neg_root_mean_squared_error','RMSE'),('r2','R-squared (R²)')],
     #         }
 
-# hyperparameter_grid_ = {
-#             'n_estimators': [150],
-#             'max_depth': [8,15],
-#             'min_samples_split': [10,20],
-#             'min_samples_leaf': [5],
-#             'max_features': ['sqrt'] #'None' can lead to overfitting.
-#         }
 hyperparameter_grid_ = {
+            'n_estimators': [150],
+            'max_depth': [8,15],
+            'min_samples_split': [10,20],
+            'min_samples_leaf': [5],
+            'max_features': ['sqrt'] #'None' can lead to overfitting.
+        }
+hyperparameter_grid_RF = {
             'n_estimators': [100],
             'max_depth': [10],
             'min_samples_split': [10],
@@ -140,6 +140,25 @@ hyperparameter_grid_XGboost = {
     'gamma': [0.1],                  # Minimum loss reduction required to make a further partition on a leaf node
 }
 
+# hyperparameter_grid_SVM = {
+#     'kernel': ['rbf'],        # Most commonly effective kernels
+#     'C': [0.1],                      # Reasonable regularization strengths for regression
+#     'epsilon': [0.01],             # Standard values for error tolerance
+#     'gamma': ['scale']             # Default and a specific small value for tuning influence
+# }
+
+hyperparameter_grid_SVM = {
+    'kernel': ['rbf'],        # Most commonly effective kernels
+    'C': [0.1, 1,10],                      # Reasonable regularization strengths for regression
+    'epsilon': [0.01, 0.1],             # Standard values for error tolerance
+    'gamma': ['scale', 0.1]             # Default and a specific small value for tuning influence
+}
+
+hyperparameter_grid_ENR = {
+    'alpha': [0.1, 1.0, 10.0],
+    'l1_ratio': [0.2, 0.5, 0.8]
+}
+
 # hyperparameter_grid_XGboost = {
 #     'n_estimators': [50, 100],          # Number of trees (lower values for quicker training)
 #     'max_depth': [3, 5, 7],             # Maximum depth of each tree (shallower trees to avoid overfitting)
@@ -148,4 +167,13 @@ hyperparameter_grid_XGboost = {
 #     'colsample_bytree': [0.6, 0.8],     # Subsample ratio of columns when constructing each tree
 #     'gamma': [0, 0.1],                  # Minimum loss reduction required to make a further partition on a leaf node
 # }
+
+
+
+
+LSTM_master_ = base_path_ / Path(f'LSTM folder')
+
+
+
+
 

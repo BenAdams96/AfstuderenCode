@@ -4,7 +4,7 @@ import correlation_matrices
 import randomForest_MD_features_only_dic
 
 import A_create_dataframes_folders
-import A_add_MD_features_to_models
+import Afstuderen0.Afstuderen.code.A_create_dataframes_reduced_MD as A_create_dataframes_reduced_MD
 import A_randomForest_make_Models
 import correlation_matrices_approach2
 import correlation_matrices_approach3
@@ -53,7 +53,7 @@ def main():
 
     # # add MD features to the reduced model
     # print('add MD features to reduced model')
-    A_add_MD_features_to_models.main() #NOTE: copies the reduced folder and adds the MD features to it. not of concat
+    A_create_dataframes_reduced_MD.main() #NOTE: copies the reduced folder and adds the MD features to it. not of concat
     A_randomForest_make_Models.main(public_variables.dfs_reduced_and_MD_path_)
     # correlation_matrices.compute_and_visualize_correlation_matrices_dic(public_variables.dfs_reduced_and_MD_path_)
     

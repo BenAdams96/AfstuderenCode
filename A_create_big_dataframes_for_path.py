@@ -6,8 +6,8 @@ from sklearn.model_selection import GroupKFold
 
 import randomForest_read_in_models
 import csv_to_dataframes
-import randomForest_Class
-from randomForest_Class import RandomForestModel
+import Afstuderen0.Afstuderen.code.A_randomForest_Class as A_randomForest_Class
+from Afstuderen0.Afstuderen.code.A_randomForest_Class import RandomForestModel
 import public_variables
 
 from sklearn.preprocessing import StandardScaler
@@ -218,14 +218,13 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
         return
     
     timeinterval = [1,0.5,0.2,0.1]
-    big_df = pd.read_csv(dfs_path / 'conformations_1000.csv')
-    print(big_df)
+    initial_df = pd.read_csv(public_variables.initial_dataframe)
+    print(initial_df)
 
     for t in timeinterval:
         print(t)
-        reduced_dataframe = reduce_conformations(big_df, interval=t)
+        reduced_dataframe = reduce_conformations(initial_df, interval=t)
         reduced_dataframe.to_csv(dfs_path / f'conformations_{int(10/t)}.csv', index=False)
-        print('done')
     # combined_df_v = combine_csv_by_molecule_order_vertically(dfs_path) #creates 'concat_ver.csv'
     # combined_df_h = combine_csv_by_molecule_order_horizontally(dfs_path) #creates 'concat_hor.csv'
     

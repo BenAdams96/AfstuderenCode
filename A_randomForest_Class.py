@@ -68,7 +68,7 @@ class RandomForestModel:
     
     def evaluate(self, X_test, y_test):
         """Evaluate the model's performance on the test data."""
-        predictions = self.predict(X_test)   ### use self.model.predict or self.predict?
+        predictions = self.model.predict(X_test)   ### use self.model.predict or self.predict?
         rmse = mean_squared_error(y_test, predictions, squared=False)
         mse = mean_squared_error(y_test, predictions)
         r2 = r2_score(y_test, predictions)
@@ -80,9 +80,14 @@ class RandomForestModel:
                                    param_grid=param_grid,
                                    cv=cv,
                                    scoring=scoring_,
-                                   verbose=0,
+                                   verbose=2,
                                    n_jobs=-1)
         grid_search.fit(X_data, y_data)
+        print('done search')
+
+        # for i, (train_indices, test_indices) in enumerate(grid_search.cv):
+        #     print(f"Split {i}: Train indices: {train_indices}, Test indices: {test_indices}")
+
         # Update the model with the best parameters found
         self.model = grid_search.best_estimator_
         self.n_trees = len(self.model.estimators_)

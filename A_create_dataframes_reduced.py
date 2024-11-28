@@ -203,6 +203,7 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_thr
     dfs_reduced_path.mkdir(parents=True, exist_ok=True)
 
     dfs_dictionary = csv_to_dictionary.main(dfs_path,exclude_files=['concat_hor.csv','concat_ver.csv', 'big.csv'])#,'conformations_1000.csv','conformations_1000_molid.csv'])
+
     print(dfs_dictionary.keys())
     dfs_dictionary = remove_constant_columns_from_dfs(dfs_dictionary)
     
@@ -215,13 +216,13 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_thr
     return
 
 if __name__ == "__main__":
-    main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_threshold=0.65)
+    main(dfs_path = public_variables.dfs_descriptors_only_path_, correlation_threshold=0.80)
     
-    bigdf = pd.read_csv(public_variables.dataframes_master_ / 'conformations_1000.csv')
-    dic = {}
-    dic['conformations_1000.csv'] = bigdf
-    standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dic)
-    print(correlation_matrices_dic)
-    reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dic, threshold=0.65)
-    save_dataframes_to_csv(reduced_dfs_in_dic, save_path=public_variables.dfs_reduced_path_)
+    # bigdf = pd.read_csv(public_variables.initial_dataframe)
+    # dic = {}
+    # dic['conformations_1000.csv'] = bigdf
+    # standardized_dfs_dic, correlation_matrices_dic = compute_correlation_matrices_of_dictionary(dic)
+    # print(correlation_matrices_dic)
+    # reduced_dfs_in_dic = get_reduced_features_for_dataframes_in_dic(correlation_matrices_dic, dic, threshold=0.65)
+    # save_dataframes_to_csv(reduced_dfs_in_dic, save_path=public_variables.dfs_reduced_path_)
 

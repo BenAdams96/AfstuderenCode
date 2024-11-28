@@ -44,29 +44,44 @@ def create_dfs_dic(totaldf, timeinterval = public_variables.timeinterval_snapsho
 
     return df_dict
 
+def reduce_conformations(df, interval=1):
+    """
+    Reduces the number of conformations per molecule in the dataframe
+    by selecting only specific conformations at given intervals, excluding 0.
+    
+    Parameters:
+        df (pd.DataFrame): The large dataframe containing all conformations.
+        interval (float): The desired interval for selection, default is 1ns.
+    
+    Returns:
+        pd.DataFrame: A reduced dataframe with only the specified conformations per molecule.
+    """
+    # Define the target conformations, starting from the first interval, excluding 0
+    target_conformations = [round(i * interval, 2) for i in range(1, int(10 / interval) + 1)]
+    
+    # Filter the dataframe to only include rows with conformations in target_conformations
+    reduced_df = df[df['conformations (ns)'].isin(target_conformations)].copy(False)
+    
+    return reduced_df
+
 def main():
-    totaldf = pd.read_csv(public_variables.dataframes_master_ / 'conformations_1000.csv')
+    totaldf = pd.read_csv(public_variables.initial_dataframe)
 
     dfs_in_dict = create_dfs_dic(totaldf, timeinterval = 1)
     save_dataframes(dfs_in_dict,public_variables.dfs_descriptors_only_path_)
     
+    timeinterval = [1,0.5,0.2,0.1]
+    initial_df = pd.read_csv(public_variables.initial_dataframe)
+    print(initial_df)
+
+    for t in timeinterval:
+        print(t)
+        reduced_dataframe = reduce_conformations(initial_df, interval=t)
+        reduced_dataframe.to_csv(public_variables.dfs_descriptors_only_path_ / f'conformations_{int(10/t)}.csv', index=False)
+
     return
 
 if __name__ == "__main__":
 
     main()
-
-
-# print("hello world")
-# print(rdkit.__version__)
-# pdb_file = '100.pdb'
-# mol = Chem.MolFromPDBFile(pdb_file, removeHs=False)
-
-# if mol is None:
-#     print("Failed to read PDB file")
-# else:
-#     whim_descriptors = rdMolDescriptors.CalcWHIM(mol)
-#     print(len(whim_descriptors))
-#     #for i, value in enumerate(whim_descriptors):
-#     #    print(f"WHIM Descriptor {i+1}: {value}")
 

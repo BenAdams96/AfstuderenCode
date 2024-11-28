@@ -516,7 +516,7 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     # Adjust x-axis limits
     plt.xlim(-(box_width/2) - border, positions[-1] + (box_width/2) + border)
     # Set y-axis limits between 0.4 and 0.9
-    plt.ylim(0.0, 0.5)
+    plt.ylim(0.3, 0.9)
     # Set xticks and labels
     xtick_labels = [subgroup for group in modelresults_dict.values() for subgroup in group.keys()]
 
@@ -570,10 +570,10 @@ if __name__ == "__main__":
     # dfs_paths.append((drmpath, ['minimized','conformations_10','conformations_20','conformations_50','conformations_100']))
     # dfs_paths.append((dmpath, ['minimized','conformations_10','conformations_20','conformations_50','conformations_100']))
 
-    dfs_paths.append((public_variables.dfs_descriptors_only_path_, ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_50','conformations_100']
-    dfs_paths.append((public_variables.dfs_reduced_path_, ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['rdkit_min','0ns'] ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns']
-    dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, ['minimized']))
-    dfs_paths.append((public_variables.dfs_MD_only_path_, ['minimized']))
+    dfs_paths.append((public_variables.dfs_descriptors_only_path_, []))#['conformations_11','1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_50','conformations_100']
+    dfs_paths.append((public_variables.dfs_reduced_path_, []))#['conformations_11','1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20','conformations_100'])) #['rdkit_min','0ns'] ['1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns']
+    # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, ['minimized']))
+    # dfs_paths.append((public_variables.dfs_MD_only_path_, ['minimized']))
 
 
 

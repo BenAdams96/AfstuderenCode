@@ -90,6 +90,6 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):
     return
 
 if __name__ == "__main__":
-    # main(dfs_path = public_variables.dfs_descriptors_only_path_)
+    main(dfs_path = public_variables.dfs_descriptors_only_path_)
     main(dfs_path = public_variables.dfs_reduced_path_)
-    main(dfs_path = public_variables.dfs_reduced_and_MD_path_)
+    # main(dfs_path = public_variables.dfs_reduced_and_MD_path_)

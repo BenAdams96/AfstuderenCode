@@ -1,6 +1,8 @@
 from xgboost import XGBRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
+
+
 import pandas as pd
 import numpy as np
 
@@ -45,7 +47,7 @@ class XGBoostModel:
                                    param_grid=param_grid,
                                    cv=cv,
                                    scoring=scoring_,
-                                   verbose=0,
+                                   verbose=2,
                                    n_jobs=-1)
         grid_search.fit(X_data, y_data)
         self.model = grid_search.best_estimator_
