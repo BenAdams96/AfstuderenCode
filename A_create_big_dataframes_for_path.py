@@ -6,8 +6,8 @@ from sklearn.model_selection import GroupKFold
 
 import randomForest_read_in_models
 import csv_to_dataframes
-import Afstuderen0.Afstuderen.code.A_randomForest_Class as A_randomForest_Class
-from Afstuderen0.Afstuderen.code.A_randomForest_Class import RandomForestModel
+
+
 import public_variables
 
 from sklearn.preprocessing import StandardScaler
@@ -222,7 +222,7 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
     print(initial_df)
 
     for t in timeinterval:
-        print(t)
+        print(t) 
         reduced_dataframe = reduce_conformations(initial_df, interval=t)
         reduced_dataframe.to_csv(dfs_path / f'conformations_{int(10/t)}.csv', index=False)
     # combined_df_v = combine_csv_by_molecule_order_vertically(dfs_path) #creates 'concat_ver.csv'
@@ -259,6 +259,6 @@ def main(dfs_path = public_variables.dfs_descriptors_only_path_):  ###set as def
 if __name__ == "__main__":
     
     main(public_variables.dfs_descriptors_only_path_)
-    main(public_variables.dfs_reduced_path_)
+    # main(public_variables.dfs_reduced_path_)
     # main(public_variables.dfs_reduced_and_MD_path_)
     # main(public_variables.dfs_MD_only_path_)

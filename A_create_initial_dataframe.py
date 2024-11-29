@@ -63,7 +63,9 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
                         Chem.SanitizeMol(mol)
                     except ValueError as e:
                         print(f"Sanitization error: {e}")
-                        continue
+                        print(pdb_file)
+
+                        
                 else:
                     print("Invalid molecule:")
                     print(pdb_file)

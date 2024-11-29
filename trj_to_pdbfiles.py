@@ -104,7 +104,7 @@ def main(MDsimulations_path = public_variables.MDsimulations_path_, output_folde
     valid_mols_sorted = sorted(valid_mols, key=int)
     print(valid_mols_sorted)
     # Process trajectories
-    trj_to_pdb(valid_mols_sorted[398:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
+    trj_to_pdb(valid_mols_sorted[346:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
     print(f"number of molecules: {len(all_molecules_list)}")
     print(f"number of molecules with succesful simulations: {len(valid_mols)}")
     print(f"Invalid molecules: {invalid_mols}")

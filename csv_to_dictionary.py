@@ -40,11 +40,12 @@ def csvfiles_to_dic(dfs_path, exclude_files: list = []):
         exclude_files = []
     dic = {}
     for csv_file in dfs_path.glob('*.csv'):
-        print(csv_file.name)
+        # print(csv_file.name)
         if csv_file.name not in exclude_files:
             dic[csv_file.stem] = pd.read_csv(csv_file)
         else:
-            print(f'name {csv_file} is in exclude')
+            continue
+            # print(f'name {csv_file} is in exclude')
     # Define the regex pattern to match filenames like '0ns.csv', '1ns.csv', '1.5ns.csv', etc.
     # pattern = re.compile(r'^\d+(\.\d+)?ns\.csv$')
 

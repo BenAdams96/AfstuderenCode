@@ -31,7 +31,7 @@ ligand_conformations_folder_ = f'ligand_conformations_{dataset_protein_}'
 ligand_conformations_path_ = base_path_ / ligand_conformations_folder_
 
 dataframes_master_ = base_path_ / Path(f'dataframes_{dataset_protein_}_{RDKIT_descriptors_}')
-initial_dataframe = base_path_ / Path('initial_dataframe.csv')
+initial_dataframe = dataframes_master_ / Path('initial_dataframe.csv')
 dfs_descriptors_only_path_ =  dataframes_master_ / 'descriptors only'
 dfs_reduced_path_ = dataframes_master_ / f'reduced_t{correlation_threshold_}'
 dfs_PCA_path =  dataframes_master_ / 'PCA'
