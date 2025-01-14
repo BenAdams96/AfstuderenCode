@@ -7,6 +7,7 @@ from global_files import csv_to_dataframes
 
 from Models.RF.RF_Class import RandomForestModel
 from global_files import public_variables
+from Models.RF.BaseModel_Classes import RandomForestModel2, XGBoostModel2, SVRModel2
 
 from sklearn.preprocessing import StandardScaler
 
