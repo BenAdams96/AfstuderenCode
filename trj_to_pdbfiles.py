@@ -9,7 +9,7 @@ import pathlib
 import MDAnalysis as mda
 from MDAnalysis.coordinates import PDB
 import shutil
-import public_variables
+from global_files import public_variables
 
 def get_molecules_lists(MDsimulations_path):
     '''uses the MD_simulations folder and checks for every molecule the simulation whether it contains the .tpr and .xtc file
@@ -100,11 +100,11 @@ def main(MDsimulations_path = public_variables.MDsimulations_path_, output_folde
     print(invalid_mols)
     print('done getting molecules')
     #Define frames to extract
-    frames_to_extract = list(range(0,1001,1))  # every 1ns extract frame for 10ns. so [0ns,1ns,2ns,...,10ns]
+    frames_to_extract = list(range(0,1001,10))  # every 1ns extract frame for 10ns. so [0ns,1ns,2ns,...,10ns]
     valid_mols_sorted = sorted(valid_mols, key=int)
     print(valid_mols_sorted)
     # Process trajectories
-    trj_to_pdb(valid_mols_sorted[346:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
+    trj_to_pdb(valid_mols_sorted[134:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
     print(f"number of molecules: {len(all_molecules_list)}")
     print(f"number of molecules with succesful simulations: {len(valid_mols)}")
     print(f"Invalid molecules: {invalid_mols}")
@@ -112,13 +112,14 @@ def main(MDsimulations_path = public_variables.MDsimulations_path_, output_folde
 
 # Example usage
 if __name__ == "__main__":
+    #NOTE: 10 seconden per molecule als ik 100 frames doe
     print('trj_to_pdbfiles')
     MDsimulations_path = public_variables.MDsimulations_path_ #the folder containing all the MD simulations {001,002..615}
     MDsimulations_folder_ = f'MDsimulations_JAK1'
     MDsimulations_path = public_variables.base_path_.parents[0] / MDsimulations_folder_
     
     output_folder = public_variables.ligand_conformations_path_
-    ligand_conformations_folder_ = f'ligand_conformations_JAK1'
+    ligand_conformations_folder_ = f'ligand_conformations_JAK1_2'
     
     print(type(MDsimulations_path))
     main(MDsimulations_path, ligand_conformations_folder_)

@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
 import random
-import public_variables
+from global_files import public_variables
 import csv_to_dataframes
 import csv_to_dictionary
 from csv_to_dataframes import csvfiles_to_dfs

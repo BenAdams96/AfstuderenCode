@@ -3,8 +3,7 @@ import shutil
 import subprocess
 import pandas as pd
 from io import StringIO
-import public_variables
-import public_functions
+from global_files import public_variables, public_functions
 import os
 import re
 

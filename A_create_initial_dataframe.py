@@ -23,7 +23,7 @@ def get_targets(dataset):
     df['PKI'] = -np.log10(df['exp_mean [nM]'] * 1e-9)
     return df[['mol_id','PKI']]
     
-def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_molecules_list):
+def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, valid_molecules):
     ''' Create the WHIM dataframes for every molecule for every timestep (xdirs)
         First goes over the timesteps, then every molecule within that timestep
         Output: total_df_conf_order - dataframe with the descriptors of the molecule for every timestep including mol_id and PKI
@@ -42,7 +42,8 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
     
     sorted_folders = get_sorted_folders(ligand_conformations_path)  # Sorted from 0ns to 10ns
     filtered_paths = [path for path in sorted_folders if float(path.name.replace('ns', '')) * 10 % 1 == 0] #only use stepsize of 0.1 instead of 0.01
-    
+    print('valid molecule')
+    print(valid_molecules)
     rows = []
 
     for idx, dir_path in enumerate(filtered_paths):  # dir_path = 0ns, 0.1ns, 0.2ns folder etc.
@@ -53,8 +54,10 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
             pdb_files = [file for file in os.listdir(dir_path) if file.endswith('.pdb')]
             filtered_sorted_list = sorted([file for file in pdb_files if int(file.split('_')[0]) <= max_molecule_number], #TODO: shitty solution
                               key=lambda x: int(x.split('_')[0]))
+            
             # print(filtered_sorted_list)
             for pdb_file in filtered_sorted_list:
+                
                 pdb_file_path = os.path.join(dir_path, pdb_file)
                 mol = Chem.MolFromPDBFile(pdb_file_path, removeHs=False, sanitize=False)
                 
@@ -64,7 +67,6 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, all_mo
                     except ValueError as e:
                         print(f"Sanitization error: {e}")
                         print(pdb_file)
-
                         
                 else:
                     print("Invalid molecule:")
@@ -158,9 +160,9 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
 
     # #check how many invalids there are which we need to remove from the dataframes
     all_molecules_list, valid_mols, invalid_mols = trj_to_pdbfiles.get_molecules_lists(MDsimulations_path)
-    print(all_molecules_list)
+    
     #create the dataframes, which eventually will be placed in 'dataframes_JAK1_WHIM' and also add the targets to the dataframes.
-    df_sorted_by_configuration = create_full_dfs(ligand_conformations_path, df_targets, descriptors, all_molecules_list)
+    df_sorted_by_configuration = create_full_dfs(ligand_conformations_path, df_targets, descriptors, valid_molecules=valid_mols)
     df_sorted_by_molid = df_sorted_by_configuration.sort_values(by=['mol_id', 'conformations (ns)']).reset_index(drop=True)
 
     public_variables.dataframes_master_.mkdir(parents=True, exist_ok=True)
@@ -169,7 +171,6 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
     return
 
 if __name__ == "__main__":
-
     ligand_conformations_path = public_variables.ligand_conformations_path_ # 'ligand_conformations_JAK1'
     dataset_csvfile_path = public_variables.dataset_csvfile_path_ # 'JAK1dataset.csv'
     MDsimulations_path = public_variables.MDsimulations_path_

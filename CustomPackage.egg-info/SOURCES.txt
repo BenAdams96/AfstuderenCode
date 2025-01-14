@@ -1,0 +1,9 @@
+README.md
+setup.py
+CustomPackage.egg-info/PKG-INFO
+CustomPackage.egg-info/SOURCES.txt
+CustomPackage.egg-info/dependency_links.txt
+CustomPackage.egg-info/top_level.txt
+clustering/A_create_dataframes_descriptors_only_stable_methodone.py
+clustering/__init__.py
+clustering/get_stable_conformation.py

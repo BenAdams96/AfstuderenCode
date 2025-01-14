@@ -9,7 +9,7 @@ import pathlib
 import MDAnalysis as mda
 from MDAnalysis.coordinates import PDB
 import shutil
-import public_variables
+from global_files import public_variables
 
 def get_molecules_lists(MDsimulations_path):
     '''uses the MD_simulations folder and checks for every molecule the simulation whether it contains the .tpr and .xtc file

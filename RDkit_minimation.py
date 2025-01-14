@@ -12,7 +12,7 @@ import pandas as pd
 import math
 import re
 import os
-import public_variables
+from global_files import public_variables
 
 from rdkit import Chem
 from rdkit.Chem import AllChem

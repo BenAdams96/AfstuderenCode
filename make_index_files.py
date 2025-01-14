@@ -1,12 +1,11 @@
 
-import public_variables
 from pathlib import Path
 import shutil
 import subprocess
 import pandas as pd
 from io import StringIO
 # import Afstuderen0.Afstuderen.removed.randomForest_add_MD_features as randomForest_add_MD_features
-import public_variables
+from global_files import public_variables
 # import public_functions
 
 import os
