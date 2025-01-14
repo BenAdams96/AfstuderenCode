@@ -39,11 +39,16 @@ def create_full_dfs(ligand_conformations_path, molID_PKI_df, descriptors, valid_
         max_molecule_number = 615
     elif public_variables.dataset_protein_ == 'GSK3':
         max_molecule_number = 856
+    elif public_variables.dataset_protein_ == 'pparD':
+        max_molecule_number = 1125
+    elif public_variables.dataset_protein_ == 'pparD2':
+        max_molecule_number = 1125
     
     sorted_folders = get_sorted_folders(ligand_conformations_path)  # Sorted from 0ns to 10ns
     filtered_paths = [path for path in sorted_folders if float(path.name.replace('ns', '')) * 10 % 1 == 0] #only use stepsize of 0.1 instead of 0.01
     print('valid molecule')
     print(valid_molecules)
+    print(len(filtered_paths))
     rows = []
 
     for idx, dir_path in enumerate(filtered_paths):  # dir_path = 0ns, 0.1ns, 0.2ns folder etc.
@@ -150,9 +155,9 @@ def save_dataframes(dic_with_dfs,base_path):
 
 #NOTE: this file does: get targets, count how many valid molecules and which,it creates the folder 'dataframes_WHIMJAK1' or equivellant
 def main(ligand_conformations_path=public_variables.ligand_conformations_path_, \
-         dataset_path=public_variables.dataset_csvfile_path_, \
+         dataset_path=public_variables.dataset_path_, \
             MDsimulations_path=public_variables.MDsimulations_path_,\
-                descriptors=public_variables.RDKIT_descriptors_):
+                descriptors=public_variables.Descriptor_):
 
     #only contains molID and PKI value
     #NOTE: is it necessary to get the targets already?
@@ -172,9 +177,9 @@ def main(ligand_conformations_path=public_variables.ligand_conformations_path_, 
 
 if __name__ == "__main__":
     ligand_conformations_path = public_variables.ligand_conformations_path_ # 'ligand_conformations_JAK1'
-    dataset_csvfile_path = public_variables.dataset_csvfile_path_ # 'JAK1dataset.csv'
+    dataset_csvfile_path = public_variables.dataset_path_ # 'JAK1dataset.csv'
     MDsimulations_path = public_variables.MDsimulations_path_
-    RDKIT_descriptors = public_variables.RDKIT_descriptors_
+    RDKIT_descriptors = public_variables.Descriptor_
 
     main(ligand_conformations_path, dataset_csvfile_path, MDsimulations_path, RDKIT_descriptors)
 

@@ -1,0 +1,2 @@
+mol_id,mean_test_score,std_test_score,params,split0_test_score,split1_test_score,split2_test_score,split3_test_score,split4_test_score,split5_test_score,split6_test_score,split7_test_score,split8_test_score,split9_test_score
+2D_ECFP,0.8334771069967756,0.02492229071676614,"{'C': 1, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': 'rbf'}",0.8694575760494805,0.828068476345858,0.8718518758971239,0.8263085033193198,0.8416975508058059,0.8341977708657986,0.8173075039229039,0.8080079744211957,0.8448325173570098,0.7930413209832589

@@ -1,0 +1,2 @@
+mol_id,mean_test_score,std_test_score,params,split0_test_score,split1_test_score,split2_test_score,split3_test_score,split4_test_score,split5_test_score,split6_test_score,split7_test_score,split8_test_score,split9_test_score
+2D_ECFP,0.8260327739337219,0.03897591017425972,"{'colsample_bytree': 0.7, 'gamma': 0.1, 'learning_rate': 0.2, 'max_depth': 2, 'n_estimators': 150, 'subsample': 0.7}",0.866145602225687,0.8441391673500831,0.8480928321271923,0.8654667883315509,0.8509847518428759,0.8077649034568605,0.8165625390086979,0.804182747846937,0.8212157988354846,0.7357726083118498

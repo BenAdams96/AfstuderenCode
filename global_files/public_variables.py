@@ -7,7 +7,7 @@ print(base_path_)
 #dataset related variable names
 MLmodel_ = 'RF'
 Descriptor_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
-dataset_protein_ = 'JAK1'   #VARIABLE 'JAK1' or 'GSK3'
+dataset_protein_ = 'pparD'   #VARIABLE 'JAK1' or 'GSK3'
 dataset_filename_ = dataset_protein_ + '_dataset.csv'
 dataset_path_ = base_path_ / dataset_filename_
 

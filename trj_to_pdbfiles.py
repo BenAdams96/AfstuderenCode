@@ -104,7 +104,7 @@ def main(MDsimulations_path = public_variables.MDsimulations_path_, output_folde
     valid_mols_sorted = sorted(valid_mols, key=int)
     print(valid_mols_sorted)
     # Process trajectories
-    trj_to_pdb(valid_mols_sorted[134:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
+    trj_to_pdb(valid_mols_sorted[783:], frames_to_extract,base_path, MDsimulations_path, output_folder) #at 748
     print(f"number of molecules: {len(all_molecules_list)}")
     print(f"number of molecules with succesful simulations: {len(valid_mols)}")
     print(f"Invalid molecules: {invalid_mols}")
@@ -115,11 +115,12 @@ if __name__ == "__main__":
     #NOTE: 10 seconden per molecule als ik 100 frames doe
     print('trj_to_pdbfiles')
     MDsimulations_path = public_variables.MDsimulations_path_ #the folder containing all the MD simulations {001,002..615}
-    MDsimulations_folder_ = f'MDsimulations_JAK1'
+    MDsimulations_folder_ = f'MDsimulations_pparD'
     MDsimulations_path = public_variables.base_path_.parents[0] / MDsimulations_folder_
     
     output_folder = public_variables.ligand_conformations_path_
-    ligand_conformations_folder_ = f'ligand_conformations_JAK1_2'
+    # ligand_conformations_folder_ = f'ligand_conformations_JAK1_2'
+    ligand_conformations_folder_ = f'ligand_conformations_pparD'
     
     print(type(MDsimulations_path))
     main(MDsimulations_path, ligand_conformations_folder_)

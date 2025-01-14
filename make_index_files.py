@@ -47,7 +47,7 @@ from pathlib import Path
 
 def make_PSA_index_files(MD_path):
     os.chdir(MD_path)
-    for padded_num in (f"{i:03}" for i in range(1,857)): #not abstract yet, not necessary
+    for padded_num in (f"{i:03}" for i in range(1,1126)): #not abstract yet, not necessary
         pdb_file = MD_path / padded_num / f'{padded_num}_prod.pdb'
         ndx_file = MD_path / padded_num / f'index_PSA_{padded_num}.ndx'
         os.chdir(MD_path / padded_num)
@@ -77,7 +77,7 @@ def run_gmx_psa_sasa(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 857)):
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):
         os.chdir(MD_path / f'{padded_num}')
         sasa_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -149,7 +149,7 @@ def run_gmx_dipoles(MD_path, output_path_TDM, output_path_epsilon):
     output_path_TDM.mkdir(parents=True, exist_ok=True)  # Create the folder for storing xvg files
     output_path_epsilon.mkdir(parents=True, exist_ok=True)
     # Loop over the molecules (using padded numbers)
-    for padded_num in (f"{i:03}" for i in range(1, 857)):
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):
         
         os.chdir(MD_path / f'{padded_num}')
         dipole_file = output_path_TDM / f'{padded_num}.xvg'
@@ -277,7 +277,7 @@ def run_gmx_gyrate(MD_path, output_path):
     output_path.mkdir(parents=True, exist_ok=True)  # Create the folder for storing xvg files
 
     # Loop over the molecules (using padded numbers)
-    for padded_num in (f"{i:03}" for i in range(1, 857)):
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):
         os.chdir(MD_path / f'{padded_num}')
         gyrate_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -351,28 +351,31 @@ def make_index_files(MD_path):
     os.chdir(MD_path)
     user_input = 'q'
 
-    for padded_num in (f"{i:03}" for i in range(1, 900)): #not abstract yet, not necessary
+    for padded_num in (f"{i:03}" for i in range(1, 1126)): #not abstract yet, not necessary
         tpr_file = MD_path / padded_num / f'{padded_num}_prod.tpr'
         ndx_file = MD_path / padded_num / f'{padded_num}_index.ndx'
-        os.chdir(MD_path / padded_num)
-        print(tpr_file)
-        if tpr_file.exists():
-            # Construct the command and its arguments as a list
-            command = ["gmx", "make_ndx", "-f", str(tpr_file), "-o", str(ndx_file)]
-            
-            # Run the command using subprocess and provide inputs interactively
-            try:
-                with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True) as proc:
-                    # Provide the inputs to the command
-                    proc.communicate(input='1 name ligand\nq\n')
-                print(f"Index file created: {ndx_file}")
-            except subprocess.CalledProcessError as e:
-                print(f"Error occurred while running the command: {e}")
-            except FileNotFoundError as e:
-                print(f"Command not found: {e}")
-        else:
-            print(f'tpr not present in: {padded_num}')
-            continue
+        combined_path = MD_path / padded_num
+        if combined_path.exists() and combined_path.is_dir():
+            print(f"The directory exists: {combined_path}")
+            os.chdir(combined_path)
+            print(tpr_file)
+            if tpr_file.exists():
+                # Construct the command and its arguments as a list
+                command = ["gmx", "make_ndx", "-f", str(tpr_file), "-o", str(ndx_file)]
+                
+                # Run the command using subprocess and provide inputs interactively
+                try:
+                    with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True) as proc:
+                        # Provide the inputs to the command
+                        proc.communicate(input='1 name ligand\nq\n')
+                    print(f"Index file created: {ndx_file}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error occurred while running the command: {e}")
+                except FileNotFoundError as e:
+                    print(f"Command not found: {e}")
+            else:
+                print(f'tpr not present in: {padded_num}')
+                continue
     return
 
 def calculate_hbond(MD_path):
@@ -382,7 +385,7 @@ def calculate_hbond(MD_path):
     os.chdir(MD_path)
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):  # Adjust the range as needed
         # Define file paths
         tpr_file = MD_path / padded_num / f'{padded_num}_prod.tpr'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'  # Trajectory file
@@ -420,7 +423,7 @@ def calculate_hbond(MD_path):
 
     return
 
-def calculate_hbond_dataframe_trajectory(MD_path, lig_conf_system_path):
+def calculate_hbond_dataframe_trajectory(MD_path):
     '''Function to compute hydrogen bonds using gmx hbond.'''
 
     # Change the directory to MD_path once before the loop
@@ -429,7 +432,7 @@ def calculate_hbond_dataframe_trajectory(MD_path, lig_conf_system_path):
     final_df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds'])
     result_list = []
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -473,6 +476,59 @@ def calculate_hbond_dataframe_trajectory(MD_path, lig_conf_system_path):
     final_df.to_csv(public_variables.energyfolder_path_ / 'hbonds.csv', index=False)
     return final_df
 
+def calculate_hbond_dataframe_trajectory2(MD_path):
+    '''Function to compute hydrogen bonds using gmx hbond.'''
+
+    # Change the directory to MD_path once before the loop
+    os.chdir(MD_path)
+
+    final_df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds'])
+    result_list = []
+    # Iterate through the padded range of numbers
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):  # Adjust the range as needed
+        print(padded_num)
+        # Define file paths
+        os.chdir(MD_path / f'{padded_num}')
+        xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
+        tpr_file = MD_path / padded_num / f'{padded_num}_prod.tpr'
+        ndx_file = MD_path / padded_num / f'{padded_num}_index.ndx'
+        hbnum_file = public_variables.MDsimulations_path_ / f'{padded_num}' / 'hbnum.xvg'
+        hbond_file = public_variables.MDsimulations_path_ / f'{padded_num}' / f'{padded_num}_hbond_traj.xvg'
+        if tpr_file.exists(): # and pdbfile_path.exists():
+            #gmx hbond -f 001_prod.xtc -s 001_prod.tpr -n 001_index.ndx -dist 001_hbondtesting.xvg
+            # Construct the command and its arguments as a list
+            # command = ["gmx", "hbond", "-f", str(xtc_file), "-s", str(tpr_file), "-n", str(ndx_file), "-dist", str(hbond_file)]
+            # "gmx", "hbond", "-f", str(xtc_file), "-s", str(tpr_file), "-n", str(ndx_file), "-dist", str(hbond_file)
+            # Define the input strings for group selections
+            # Assume group 2 is the donor and group 3 is the acceptor
+            input_str = '2\n3\n'  # Adjust these numbers as needed
+            # Run the command using subprocess and provide inputs interactively
+            try:
+                print('try')
+                print(xtc_file)
+                command = f"gmx hbond -f {xtc_file} -s {tpr_file} -n {ndx_file} -dist {hbond_file}"
+                user_input = '\n'.join(["2",'3'])
+                subprocess.run(command, shell=True, input=user_input,capture_output=True, text=True)
+                num_of_hbonds_df = read_out_hbnum(hbnum_file)
+                result_df = pd.DataFrame({
+                    'mol_id': padded_num,
+                    'picoseconds': num_of_hbonds_df.index*10,     # Original index
+                    'num_of_hbonds': num_of_hbonds_df.values  # Values from num_of_hbonds
+                })
+                
+                print('append to result list')
+                result_list.append(result_df)
+                print('done appending')
+            except subprocess.CalledProcessError as e:
+                        print(f"Error occurred while running the command: {e}")
+            except FileNotFoundError as e:
+                print(f"Command not found: {e}")
+        else:
+            print(f"{padded_num} not valid")
+            continue
+    final_df = pd.concat(result_list, ignore_index=True)
+    final_df.to_csv(public_variables.energyfolder_path_ / 'hbonds.csv', index=False)
+    return final_df
 
 def calculate_hbond_dataframe(MD_path, lig_conf_system_path):
     '''Function to compute hydrogen bonds using gmx hbond.'''
@@ -483,7 +539,7 @@ def calculate_hbond_dataframe(MD_path, lig_conf_system_path):
     df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds', 'average_hbond_distance'])
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -541,7 +597,7 @@ def calculate_sasa(MD_path, lig_conf_system_path):
     df = pd.DataFrame(columns=['mol_id', 'picoseconds', 'num_of_hbonds', 'average_hbond_distance'])
 
     # Iterate through the padded range of numbers
-    for padded_num in (f"{i:03}" for i in range(1, 857)):  # Adjust the range as needed
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):  # Adjust the range as needed
         print(padded_num)
         # Define file paths
         os.chdir(MD_path / f'{padded_num}')
@@ -624,7 +680,7 @@ def run_gmx_sasa(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 857)):
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):
         print(padded_num)
         os.chdir(MD_path / f'{padded_num}')
         sasa_file = output_path / f'{padded_num}.xvg'
@@ -694,7 +750,7 @@ def run_gmx_rms(MD_path, output_path):
     '''
     output_path.mkdir(parents=True, exist_ok=True)
     # create the path for the xvg file to be stored
-    for padded_num in (f"{i:03}" for i in range(1, 857)):
+    for padded_num in (f"{i:03}" for i in range(1, 1126)):
         os.chdir(MD_path / f'{padded_num}')
         rmsd_file = output_path / f'{padded_num}.xvg'
         xtc_file = MD_path / padded_num / f'{padded_num}_prod.xtc'
@@ -866,7 +922,15 @@ def main():
     MDsimulations_path = public_variables.MDsimulations_path_
     
     #create ndx files
-    #make_index_files(MDsimulations_path)
+    # make_index_files(MDsimulations_path) #make index files
+
+    #use this for 
+    # calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path) #1 #nope dont use that
+    calculate_hbond_dataframe_trajectory2(MD_path=MDsimulations_path) #1 #use this one i guess. make sure export is okay
+    
+
+    #all can be removed i think:
+    ############################
     lig_conf_system_path = public_variables.base_path_ / 'ligand_conformations_system'
     
     # calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
@@ -875,42 +939,42 @@ def main():
     # pdb_file = Path('/home/ben/Download/Afstuderen0/MDsimulations/001/hbnum.xvg')
     # print(read_out_hbnum(pdb_file))
 
-    #calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
-
-    #use this for 
-    # calculate_hbond_dataframe_trajectory(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
+    # calculate_hbond_dataframe(MD_path=MDsimulations_path, lig_conf_system_path = lig_conf_system_path)
+    ############################
+    
+    energyfolder_path = public_variables.energyfolder_path_
 
     outputdir = public_variables.energyfolder_path_ / 'SASA'
-    # run_gmx_sasa(MDsimulations_path, outputdir) #NOTE: done
-    energyfolder_path = public_variables.energyfolder_path_
-    # sasa_xvg_files_to_csvfiles(energyfolder_path, outputdir)
+    run_gmx_sasa(MDsimulations_path, outputdir) #NOTE: done
+    sasa_xvg_files_to_csvfiles(energyfolder_path, outputdir) #2
+
     outputdir = public_variables.energyfolder_path_ / 'RMSD'
-    # run_gmx_rms(MDsimulations_path, outputdir)
-    # rms_xvg_files_to_csvfiles(energyfolder_path, outputdir)
+    run_gmx_rms(MDsimulations_path, outputdir)
+    rms_xvg_files_to_csvfiles(energyfolder_path, outputdir) #3
 
     #NOTE: gyration
     outputdir_gyration = public_variables.energyfolder_path_ / 'Gyration'
     run_gmx_gyrate(MD_path=MDsimulations_path, output_path=outputdir_gyration)
-    gyration_xvg_files_to_csvfiles(energyfolder_path, outputdir_gyration)
+    gyration_xvg_files_to_csvfiles(energyfolder_path, outputdir_gyration) #4
 
-    #NOTE: epsilon and total dipole moment
-    # outputdir_TDM = public_variables.energyfolder_path_ / 'Total_dipoleMoment'
-    # outputdir_epsilon = public_variables.energyfolder_path_ / 'epsilon'
-    # run_gmx_dipoles(MD_path=MDsimulations_path, output_path_TDM=outputdir_TDM, output_path_epsilon=outputdir_epsilon)
-    # Total_dipole_moment_xvg_files_to_csvfiles(energyfolder_path, totaldipoleMoment_xvgfolder_path=outputdir_TDM)
-    # epsilon_xvg_files_to_csvfiles(energyfolder_path, epsilon_xvgfolder_path=outputdir_epsilon)
+    #NOTE: epsilon and total dipole moment #all 5 lines needed
+    outputdir_TDM = public_variables.energyfolder_path_ / 'Total_dipoleMoment'
+    outputdir_epsilon = public_variables.energyfolder_path_ / 'epsilon'
+    run_gmx_dipoles(MD_path=MDsimulations_path, output_path_TDM=outputdir_TDM, output_path_epsilon=outputdir_epsilon)
+    Total_dipole_moment_xvg_files_to_csvfiles(energyfolder_path, totaldipoleMoment_xvgfolder_path=outputdir_TDM) #5
+    epsilon_xvg_files_to_csvfiles(energyfolder_path, epsilon_xvgfolder_path=outputdir_epsilon) #6
 
-    outputdir_PSA = public_variables.energyfolder_path_ / 'PSA'
-    #calculate_psa_from_trajectory(MDsimulations_path, output_file=outputdir_PSA) #dont use this i think
-    # make_PSA_index_files(MDsimulations_path)
-    # outputdir = public_variables.energyfolder_path_ / 'PSA'
-    # run_gmx_psa_sasa(MDsimulations_path, outputdir)
-    # psa_xvg_files_to_csvfiles(energyfolder_path, outputdir)
+    
+    #PSA #7 #all 4 lines
+    make_PSA_index_files(MDsimulations_path)
+    outputdir = public_variables.energyfolder_path_ / 'PSA'
+    run_gmx_psa_sasa(MDsimulations_path, outputdir)
+    psa_xvg_files_to_csvfiles(energyfolder_path, outputdir)
 
-    # file_list = ['hbonds.csv', 'rms.csv', 'sasa.csv', 'psa.csv', 'epsilon.csv', 'gyration.csv', 'dipole_moment_total.csv',f'MD_features_{public_variables.dataset_protein_}.csv']
-    # folder_path = public_variables.energyfolder_path_
-    # dfs = concatenate_csv_files(folder_path, file_list)
-    # dfs.to_csv(public_variables.energyfolder_path_ / 'MD_output.csv', index=False)
+    file_list = ['hbonds.csv', 'rms.csv', 'sasa.csv', 'psa.csv', 'epsilon.csv', 'gyration.csv', 'dipole_moment_total.csv',f'MD_features_{public_variables.dataset_protein_}.csv']
+    folder_path = public_variables.energyfolder_path_
+    dfs = concatenate_csv_files(folder_path, file_list)
+    dfs.to_csv(public_variables.energyfolder_path_ / 'MD_output.csv', index=False)
     return
 
 main()
