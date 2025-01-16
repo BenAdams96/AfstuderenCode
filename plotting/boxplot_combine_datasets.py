@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from global_files import public_variables
 from collections import defaultdict
+import math
 
 
 def display_dataframe_summary(dataframes_nested_dict):
@@ -251,7 +252,7 @@ def modelresults_to_dict(modelresult_df, idlist_exclude_files: list = None):
         modelresult_df = modelresult_df[~modelresult_df['mol_id'].isin(idlist_exclude_files)]
     
     # Get the columns that start with 'split' and end with '_test_score'
-    split_columns = [col for col in modelresult_df.columns if col.startswith('split') and col.endswith('_test_score')]
+    split_columns = [col for col in modelresult_df.columns if col.startswith('split')]
 
     # Convert the filtered DataFrame to a dictionary
     row_data_dict = modelresult_df.set_index('mol_id')[split_columns].T.to_dict('list')
@@ -386,14 +387,14 @@ def boxplots_compare_individuals(master_folder, csv_filename, modelresults_dict)
     return
 
 
-def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
+def boxplots_compare_groups(modelresults_dict, save_path, datasets): #master_folder, csv_filename, modelresults_dict): #
     """
     """
-    print(modelresults_dict)
     plt.figure()
     plt.figure(figsize=(12, 6))
     # Create a folder to save plots if it doesn't exist
-    save_plot_folder = master_folder / Path('boxplots_compare_groups')
+    # save_plot_folder = master_folder / Path('boxplots_compare_groups')
+    save_plot_folder = save_path / Path('boxplots_compare_groups')
     save_plot_folder.mkdir(parents=True, exist_ok=True)
     
     # Define colors and labels for different subfolders
@@ -444,6 +445,9 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     widths = []
     base_position = 0
 
+    min_value = float('inf')  # Set to positive infinity
+    max_value = float('-inf')  # Set to negative infinity
+
     for group_idx, (group_name, color) in enumerate(filtered_colors.items()):
         print(group_idx)
         print(group_name)
@@ -451,10 +455,13 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
         num_rows = len(modelresults_dict[group_name].values())
         
         for row_idx, subgroup in enumerate(modelresults_dict[group_name].keys()):
-            
+
             split_scores = modelresults_dict[group_name][subgroup]
             
-             #using group_idx/num_rows will make it assume that all groups have same length!
+            min_value = min(min_value, min(split_scores))
+            max_value = max(max_value, max(split_scores))
+
+            #using group_idx/num_rows will make it assume that all groups have same length!
 
             pos = base_position + row_idx * (box_width + group_gap)
 
@@ -471,6 +478,11 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     for patch, color in zip(boxplot_dict['boxes'], box_colors):
         patch.set_facecolor(color)
     
+    # Round min_value down to the nearest number with 1 decimal place
+    min_value = math.floor(min_value * 10) / 10
+
+    # Round max_value up to the nearest number with 1 decimal place
+    max_value = math.ceil(max_value * 10) / 10
     # # Add individual data points
     # for pos, split_scores in zip(positions, box_data):
     #     plt.scatter([pos] * len(split_scores), split_scores, color='black', alpha=0.8, s=10, zorder=3)  # Smaller, darker dots
@@ -527,7 +539,7 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     # Adjust x-axis limits
     plt.xlim(-(box_width/2) - border, positions[-1] + (box_width/2) + border)
     # Set y-axis limits between 0.4 and 0.9
-    plt.ylim(0.45, 0.9)
+    plt.ylim(min_value, max_value)
     # Set xticks and labels
     xtick_labels = [subgroup for group in modelresults_dict.values() for subgroup in group.keys()]
 
@@ -535,51 +547,103 @@ def boxplots_compare_groups(master_folder, csv_filename, modelresults_dict):
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
     # Save the plot
-    plot_file_path = save_plot_folder / f'{csv_filename}.png'
+    plot_file_path = save_plot_folder / f'boxplot_ko10_ki5_r2_{public_variables.Descriptor_}_{datasets}_len{row_idx+1}.png' #row_idx is number of subgroups-1
     plt.tight_layout()
     plt.savefig(plot_file_path)
     plt.close()
     return
 
- ####################################################################################################################
+####################################################################################################################
+
+def save_combined_df(dataframe, folder, datasets) -> Path:
+    save_path = public_variables.base_path_ / "Afstuderencode" / "plots" / "Modelresults_Combined" / f"{public_variables.MLmodel_}"  # = repositories on laptop
+    save_path.mkdir(parents=True, exist_ok=True)
+    final_save_path = save_path / f"combined_df_{folder}_{datasets}.csv"
+    dataframe.to_csv(final_save_path, index=False)
+    #to_csv
+    #the location
+    return save_path
+
+####################################################################################################################
+
 
 def main(dfs_paths = [public_variables.dfs_descriptors_only_path_]):
+    dfs_paths = []
 
-    master_folder = public_variables.dataframes_master_
+    files_to_include = ['minimized_conformation','1ns','2ns','3ns','4ns','5ns','6ns','7ns','8ns','9ns','10ns','conformations_10','conformations_20', 'minimized_conformations_10']
+    
+    datasets = ['JAK1', 'GSK3'] #, 'pparD']
+    descriptor_groups = ['descriptors only', f'reduced_t{public_variables.correlation_threshold_}']#,f'reduced_t{public_variables.correlation_threshold_}_MD', 'MD only']
 
-    #remove this line for when working on desktop
-    master_folder = public_variables.base_path_ / "AfstuderenCode" / Path(f'dataframes_{public_variables.dataset_protein_}_{public_variables.Descriptor_}')
-    dfs_paths = [master_folder / 'descriptors only']
-    print(dfs_paths)
+    group_results_dic = {}
 
+    for descriptor_group in descriptor_groups:
+        print(descriptor_group)
+        combined_df = None
+        for dataset in datasets:
+            
+            df  = pd.read_csv(public_variables.base_path_ / 'Afstuderencode' / f'dataframes_{dataset}_{public_variables.Descriptor_}' / descriptor_group / f'ModelResults_{public_variables.MLmodel_}' / 'results_Ko10_Ki5_r2_WHIM.csv')
+            # Filter only rows where mol_id is in mol_id_list
+            df = df[df['mol_id'].isin(files_to_include)]
+            
+            # Filter only 'mol_id' and 'split*' columns
+            df = df[['mol_id'] + [col for col in df.columns if col.startswith('split')]]
+            # Reset index to preserve row order
+            df = df.reset_index(drop=True)
+            # Rename 'split*' columns to include the dataset name
+            df = df.rename(columns={col: f"{col}_{dataset}" for col in df.columns if col != 'mol_id'})
 
-    all_modelresults_dict = {}
+            combined_df = combined_df.merge(df, on='mol_id', how='inner') if combined_df is not None else df
+        print(combined_df)
+        save_csv_path = save_combined_df(combined_df, descriptor_group, datasets)
+        
+        group_result_dic = modelresults_to_dict(combined_df, idlist_exclude_files=[]) #{'minimized_conformation': [20 values], '0ns': [20 values], etc}
 
-    for dfs_entry in dfs_paths:
-        # Check if the entry is a tuple (path, list) or just a path
-        if isinstance(dfs_entry, tuple):
-            dfs_path, idlist_to_exclude = dfs_entry  # Unpack the tuple
-            # print(dfs_path)
-            # print(f"Processing path {dfs_path.name} with CSV list to exclude: {idlist_to_exclude}")
-        else:
-            dfs_path = dfs_entry  # Only a path is given, no CSV list
-            idlist_to_exclude = None  # Set CSV list to None if not provided
-            # print(f"Processing path {dfs_path.name} with no specific CSV list to exclude")
-
-        if not dfs_path.exists():
-            # print(f"Error: The path '{dfs_path}' does not exist.")
-            continue
+        group_results_dic[descriptor_group] = group_result_dic
+    
+    boxplots_compare_groups(group_results_dic, save_csv_path, datasets)
+    
+    # for csvfile_name, modelresults_dict in outer_dict.items(): #loop over k10_r2 etc.
+    #     # boxplots_compare_individuals(master_folder, csvfile_name, modelresults_dict)
+    #     # print('ja')
+    #     boxplots_compare_groups(public_variables.base_path_ / 'Afstuderencode' / f'dataframes_{dataset}_{public_variables.Descriptor_}', csvfile_name, modelresults_dict)
+        # all_modelresults_dict = nested_data_dict(public_variables.base_path_ / 'AFSTUDERENCODE' / f'dataframes_{dataset}_{public_variables.Descriptor_}' / folder, modelresults_dict)
         # print(all_modelresults_dict)
-        all_modelresults_dict = nested_data_dict(dfs_path, all_modelresults_dict, idlist_to_exclude)
-        print('test')
-        print(all_modelresults_dict)
-    for csvfile_name, modelresults_dict in all_modelresults_dict.items(): #loop over k10_r2 etc.
-        # boxplots_compare_individuals(master_folder, csvfile_name, modelresults_dict)
-        # print('ja')
-        boxplots_compare_groups(master_folder, csvfile_name, modelresults_dict)
+
+        # modelresults_dict[folder] = [combined_df]
+    # for csvfile_name, modelresults_dict in all_modelresults_dict.items(): #loop over k10_r2 etc.
+    #     # boxplots_compare_individuals(master_folder, csvfile_name, modelresults_dict)
+    #     print('ja')
+    #     boxplots_compare_groups(public_variables.base_path_ / 'AFSTUDERENCODE' / f'dataframes_{dataset}_{public_variables.Descriptor_}', csvfile_name, modelresults_dict)
+        #place the combined_dfs in a dictionary. this then goes to boxplots_compare_groups
+        
+    # boxplots_compare_groups(modelresults_dict, save_path)
     return
 
 if __name__ == "__main__":
+    main()
+
+
+
+    # print(public_variables.base_path_ / f'dataframes_{datasets[0]}_{public_variables.Descriptor_}' / folders[0] / f'Modelresults_{public_variables.MLmodel_}')
+    #read this csv
+    #extract the correct line that we get the 3 dataframes in one. pd.merge or pd.join
+    #read out this pandas dataframe with the mol_id the same
+    #which can then be plotted
+    #keep dataframe since i want to keep the mol_id unique for plotting.
+    #then quickly done for each
+    #
+
+
+
+
+
+
+
+
+
+
+
     # exclude_files_clusters = [
     # 'clustering_target10.0%_cluster1', 'clustering_target10.0%_cluster2.csv',
     # 'clustering_target10.0%_cluster3', 'clustering_target10.0%_cluster4.csv',
@@ -699,7 +763,7 @@ if __name__ == "__main__":
     ]
 
 
-    dfs_paths = []
+    
     # dpath = public_variables.base_path_ / Path('dataframes_JAK1_WHIM') 
     # ddpath = dpath / Path('descriptors only')
     # print(ddpath)
@@ -728,10 +792,14 @@ if __name__ == "__main__":
     # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters40 + exclude_files_clusters10+ exclude_files_clusters50+ exclude_files_clusters30 + exclude_files_other))
     # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters40 + exclude_files_clusters20+ exclude_files_clusters50+ exclude_files_clusters30 + exclude_files_other))
     # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters30 + exclude_files_clusters20+ exclude_files_clusters50+ exclude_files_clusters40 + exclude_files_other))
-    dfs_paths.append((public_variables.dfs_descriptors_only_path_, exclude_files_clusters + exclude_stable2))
-    dfs_paths.append((public_variables.dfs_reduced_path_, exclude_files_clusters+ exclude_stable2))
-    dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters+ exclude_stable2))
-    dfs_paths.append((public_variables.dfs_MD_only_path_, exclude_files_clusters+ exclude_stable2))
+
+
+
+
+    # dfs_paths.append((public_variables.dfs_descriptors_only_path_, exclude_files_clusters + exclude_stable2))
+    # dfs_paths.append((public_variables.dfs_reduced_path_, exclude_files_clusters+ exclude_stable2))
+    # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters+ exclude_stable2))
+    # dfs_paths.append((public_variables.dfs_MD_only_path_, exclude_files_clusters+ exclude_stable2))
     
     # dfs_paths.append((public_variables.dfs_reduced_and_MD_path_, exclude_files_clusters40 + exclude_files_clusters20+ exclude_files_clusters40+ exclude_files_clusters30 + exclude_files_other))
     
@@ -750,6 +818,6 @@ if __name__ == "__main__":
     # dfs_paths.append((public_variables.dataframes_master_ / 'custom_dataframes',['rdkit_min','0ns']))
     # dfs_paths.append((public_variables.dataframes_master_ / 'reduced_t0.75',['rdkit_min','0ns']))
     # dfs_paths.append((public_variables.dataframes_master_ / 'descriptors only scaled mw',['rdkit_min','0ns']))
-    print('dfs path wordt nu geprint')
-    print(dfs_paths)
-    main(dfs_paths)
+    # print('dfs path wordt nu geprint')
+    # print(dfs_paths)
+    

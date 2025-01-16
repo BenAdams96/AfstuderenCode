@@ -7,7 +7,7 @@ print(base_path_)
 #dataset related variable names
 MLmodel_ = 'RF'
 Descriptor_ = 'WHIM' #choose between 'WHIM' and 'GETAWAY' #VARIABLE
-dataset_protein_ = 'pparD'   #VARIABLE 'JAK1' or 'GSK3'
+dataset_protein_ = 'JAK1'   #VARIABLE 'JAK1' or 'GSK3'
 dataset_filename_ = dataset_protein_ + '_dataset.csv'
 dataset_path_ = base_path_ / dataset_filename_
 
@@ -28,6 +28,8 @@ MDfeatures_allmol_csvfile = f'MD_features_{dataset_protein_}.csv'
 ligand_conformations_folder_ = f'ligand_conformations_{dataset_protein_}'
 ligand_conformations_path_ = base_path_ / ligand_conformations_folder_
 
+
+# can do like a list: folders = ['descriptors only', etc] and then dfs_descriptors_only_path = dataframes_master_ / folders[0]
 dataframes_master_ = base_path_ / Path(f'dataframes_{dataset_protein_}_{Descriptor_}')
 initial_dataframe = dataframes_master_ / Path('initial_dataframe.csv')
 dfs_descriptors_only_path_ =  dataframes_master_ / 'descriptors only'
